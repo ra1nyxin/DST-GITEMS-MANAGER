@@ -20,6 +20,8 @@
 - 已记录：被 `require` 的子脚本在 DST strict 环境里不要顶层裸用 `GLOBAL`；像 widget/helper 这种文件更稳的写法是 `local _G = _G`，否则很容易报 `variable 'GLOBAL' is not declared` 并把开房流程打断。
 - 已记录：不要默认以为原生 Lua 全局在 mod 环境里都能直接用；这次 `rawget(_G, "TheNet")` 就在启动期报了 `attempt to call global 'rawget' (a nil value)`，所以这类读取优先直接写成 `_G.TheNet` 更稳。
 - 已记录：原版 `ScrollableList` 在走 `updatefn + static_widgets` 这套模式时，不会自动把那些行 widget 挂进显示树；如果只传数组不 `AddChild`，就会出现“扫描统计有数，但列表一项都不显示”的假空列表问题。
+- 已记录：`images/ui.xml` 里的 `blank.tex` 更接近透明点击占位，不适合拿来做真正可见的面板底板；要做稳定可见的纯色背景，用 `images/global.xml` 的 `square.tex` 这类实心贴图更稳。
+- 已记录：这类实时列表里，原版滚动条和默认按钮贴图有时候交互边界不稳，尤其是自定义行内按钮和滚动同时存在时；当前版本已经改成自绘长方形按钮 + 固定行渲染，尽量减少 hover/拖动类崩溃面。
 
 实现记录：
 - `modmain.lua` 通过 `AddClassPostConstruct("screens/playerhud", ...)` 把 `GIM` 挂到本地 HUD 上，并用 `OnRawKey` 接 `N` 键切换。
@@ -33,6 +35,9 @@
 - 当前 `scripts/widgets/gimwidget.lua` 也已经避开 strict 环境下对 `GLOBAL` 的顶层裸读写法。
 - 当前 `modmain.lua` 里对 `TheNet` 的读取也已经回退成直接 `_G.TheNet`，不再依赖 `rawget` 这种在 mod 环境里不一定存在的全局函数。
 - 当前 `ScrollableList` 使用的每一行静态 widget 也已经显式挂进 `scroll_list`，避免列表数据正常但行控件根本没显示出来。
+- 当前 GIM 面板底板、标题带、状态带、列表底都已经改成 `square.tex` 实心底图，冬季雪地背景下也能稳定看清文字。
+- 当前列表已经不再依赖原版滚动条，而是改成固定 8 行渲染加上下翻页按钮，按钮也换成了自绘长方形样式。
+- 当前扫描完成后会在状态行直接显示本次扫描耗时秒数。
 
 Current features:
 - Every player with the mod installed can press `N` to open the `GIM` panel.
@@ -55,3 +60,5 @@ Notes:
 - Recorded pitfall: under DST strict mode, required helper/widget files should avoid top-level `GLOBAL` reads; `local _G = _G` is the safer pattern there.
 - Recorded pitfall: do not assume every vanilla Lua global is exposed in the mod environment. This build hit `attempt to call global 'rawget' (a nil value)`, so `_G.TheNet` is the safer read pattern here.
 - Recorded pitfall: vanilla `ScrollableList` does not automatically parent `static_widgets` into the visible widget tree. If you only pass the row array without `AddChild`, the scan can report valid counts while the list still renders as empty.
+- Recorded pitfall: `images/ui.xml` `blank.tex` behaves more like a transparent placeholder than a real visible panel fill, so stable opaque UI backgrounds should use a solid texture such as `images/global.xml` `square.tex`.
+- Recorded pitfall: stock scrollbars and default button skins can become brittle in custom live-updating row lists. This build now uses drawn rectangular buttons plus fixed-row paging to reduce hover and drag failure cases.
