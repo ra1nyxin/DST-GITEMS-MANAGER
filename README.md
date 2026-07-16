@@ -40,6 +40,16 @@
 - 当前 GIM 面板底板、标题带、状态带、列表底都已经改成 `square.tex` 实心底图，冬季雪地背景下也能稳定看清文字。
 - 当前列表已经不再依赖原版滚动条，而是改成固定 8 行渲染加上下翻页按钮，按钮也换成了自绘长方形样式。
 - 当前扫描完成后会在状态行直接显示本次扫描耗时秒数。
+- 当前 HUD 布局已经固定成 `header / status / column / list / footer` 五段，行数和间距按真实 viewport 几何对齐，不再靠碰运气摆坐标。
+- `modmain.lua` 入口先 `modimport("scripts/gim.lua")`，服务端扫描和 RPC 都从这里挂起。
+- HUD 注入走 `AddClassPostConstruct("screens/playerhud", ...)`，`N` 键切换则是包一层 `PlayerHUD:OnRawKey`。
+- 客户端发请求用 `SendModRPCToServer(GetModRPC(...))`，当前有 `request_scan`、`cancel_scan`、`request_pickup` 三个入口。
+- 服务端注册入口用 `AddModRPCHandler(...)`，结果回客户端则走 `SendModRPCToClient(GetClientModRPC(...), userid, ...)`。
+- 客户端接回包用 `AddClientModRPCHandler(...)`，然后把 `scan_begin / scan_chunk / scan_complete / pickup_result` 转给 `widgets/gimwidget.lua`。
+- 分帧扫描依赖 `player:DoTaskInTime(0, ...)`，每次只处理 `SCAN_BATCH_SIZE` 个 `Ents`，避免开面板瞬间卡死。
+- 掉落物判定目前看 `inventoryitem.owner == nil`，并排除 `INLIMBO`、`NOCLICK`、`FX`、`DECOR` 这些不该进列表的实体。
+- 拾取链路核心接口是 `inventory:CanAcceptCount(inst, stack_size)`、`stackable:Get(accept_count)`、`inventory:GiveItem(...)`，兼容大堆叠也主要靠这套真实库存规则。
+- 玩家扫描状态缓存挂在 `player._gim_scan_open / _gim_scan_serial / _gim_scan_state / _gim_scan_task`，下次回看扫描取消或重扫逻辑先找这几个字段。
 
 Current features:
 - Every player with the mod installed can press `N` to open the `GIM` panel.
@@ -66,3 +76,12 @@ Notes:
 - Recorded pitfall: stock scrollbars and default button skins can become brittle in custom live-updating row lists. This build now uses drawn rectangular buttons plus fixed-row paging to reduce hover and drag failure cases.
 - Recorded pitfall: do not let paging buttons, page text, close hints, and row content float in the same loose layout block. A separate header/list/footer split with fixed columns stays far more stable.
 - Recorded pitfall: DST HUD widgets are not automatic clipping containers. If the total row stack exceeds the real viewport, rows will visually cover the status line, column labels, and footer, so row count, row height, and spacing need to fit the geometry before any fine-tuning.
+- `modmain.lua` is the bootstrap. It `modimport`s `scripts/gim.lua`, injects the HUD widget through `AddClassPostConstruct("screens/playerhud", ...)`, and wraps `PlayerHUD:OnRawKey` to toggle the panel with `N`.
+- Client requests go up through `SendModRPCToServer(GetModRPC(...))` with `request_scan`, `cancel_scan`, and `request_pickup`.
+- Server request handlers are registered through `AddModRPCHandler(...)` in `scripts/gim.lua`.
+- Server responses go back through `SendModRPCToClient(GetClientModRPC(...), userid, ...)`, and the client receives them through `AddClientModRPCHandler(...)`.
+- The live result flow is `scan_begin -> scan_chunk -> scan_complete`, with `pickup_result` sent after a take action.
+- Shard scanning is sliced with `player:DoTaskInTime(0, ...)` and `SCAN_BATCH_SIZE` so opening the panel does not try to process all `Ents` in one frame.
+- Ground-item filtering currently checks `components.inventoryitem.owner == nil` and excludes `INLIMBO`, `NOCLICK`, `FX`, and `DECOR`.
+- Pickup capacity follows the real inventory API chain: `inventory:CanAcceptCount(inst, stack_size)`, optional `stackable:Get(accept_count)`, then `inventory:GiveItem(...)`.
+- Per-player scan state lives on `player._gim_scan_open`, `_gim_scan_serial`, `_gim_scan_state`, and `_gim_scan_task`, which is the first place to inspect when scan cancel or rescan behavior looks wrong.

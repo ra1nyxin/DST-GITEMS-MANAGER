@@ -11,11 +11,11 @@ local PANEL_TEX = "square.tex"
 local PANEL_WIDTH = 920
 local PANEL_HEIGHT = 620
 local LIST_WIDTH = 820
-local ROW_HEIGHT = 42
-local ROW_PADDING = 6
+local ROW_HEIGHT = 40
+local ROW_PADDING = 4
 local ROW_VISIBLE_COUNT = 7
 local LIST_CONTENT_HEIGHT = ROW_VISIBLE_COUNT * ROW_HEIGHT + (ROW_VISIBLE_COUNT - 1) * ROW_PADDING
-local LIST_HEIGHT = LIST_CONTENT_HEIGHT + 30
+local LIST_HEIGHT = LIST_CONTENT_HEIGHT + 32
 
 local function GetNow()
     return _G.GetTime ~= nil and _G.GetTime() or 0
@@ -101,27 +101,27 @@ local GIMRow = Class(Widget, function(self, owner, onclick)
     self.name_text = self:AddChild(Text(_G.CHATFONT, 24, ""))
     self.name_text:SetColour(0.95, 0.95, 0.95, 1)
     self.name_text:SetHAlign(_G.ANCHOR_LEFT)
-    self.name_text:SetRegionSize(260, 34)
+    self.name_text:SetRegionSize(280, 34)
     self.name_text:SetPosition(-282, 0, 0)
 
     self.prefab_text = self:AddChild(Text(_G.CHATFONT, 18, ""))
     self.prefab_text:SetColour(0.72, 0.72, 0.72, 1)
     self.prefab_text:SetHAlign(_G.ANCHOR_LEFT)
-    self.prefab_text:SetRegionSize(250, 28)
-    self.prefab_text:SetPosition(-34, 0, 0)
+    self.prefab_text:SetRegionSize(270, 28)
+    self.prefab_text:SetPosition(-42, 0, 0)
 
     self.count_text = self:AddChild(Text(_G.CHATFONT, 22, ""))
     self.count_text:SetColour(0.92, 0.86, 0.58, 1)
     self.count_text:SetHAlign(_G.ANCHOR_RIGHT)
     self.count_text:SetRegionSize(90, 30)
-    self.count_text:SetPosition(218, 0, 0)
+    self.count_text:SetPosition(212, 0, 0)
 
     self.button = self:AddChild(RectButton(110, 32, "Take", function()
         if self.data ~= nil and self.onclick ~= nil then
             self.onclick(self.data.prefab)
         end
     end))
-    self.button:SetPosition(332, 0, 0)
+    self.button:SetPosition(328, 0, 0)
 end)
 
 function GIMRow:SetData(data, row_index)
@@ -189,13 +189,13 @@ local GIMWidget = Class(Widget, function(self, owner, hud)
 
     self.column_band = self.panel:AddChild(Image(PANEL_ATLAS, PANEL_TEX))
     self.column_band:ScaleToSize(LIST_WIDTH + 28, 34)
-    self.column_band:SetPosition(0, 133, 0)
+    self.column_band:SetPosition(0, 131, 0)
     self.column_band:SetTint(0.06, 0.06, 0.06, 0.985)
     self.column_band:SetClickable(false)
 
     self.list_bg = self.panel:AddChild(Image(PANEL_ATLAS, PANEL_TEX))
     self.list_bg:ScaleToSize(LIST_WIDTH + 28, LIST_HEIGHT)
-    self.list_bg:SetPosition(0, -22, 0)
+    self.list_bg:SetPosition(0, -31, 0)
     self.list_bg:SetTint(0.05, 0.05, 0.05, 0.985)
     self.list_bg:SetClickable(false)
 
@@ -206,15 +206,15 @@ local GIMWidget = Class(Widget, function(self, owner, hud)
     self.footer_band:SetClickable(false)
 
     self.header = self.panel:AddChild(Text(_G.CHATFONT, 40, "GIM"))
-    self.header:SetPosition(-344, 252, 0)
+    self.header:SetPosition(-316, 252, 0)
     self.header:SetHAlign(_G.ANCHOR_LEFT)
     self.header:SetRegionSize(300, 48)
 
     self.subheader = self.panel:AddChild(Text(_G.CHATFONT, 20, "Open: N   Close: N   Scope: current shard"))
     self.subheader:SetColour(0.78, 0.78, 0.78, 1)
-    self.subheader:SetPosition(-160, 218, 0)
+    self.subheader:SetPosition(-108, 218, 0)
     self.subheader:SetHAlign(_G.ANCHOR_LEFT)
-    self.subheader:SetRegionSize(700, 28)
+    self.subheader:SetRegionSize(660, 28)
 
     self.status_text = self.panel:AddChild(Text(_G.CHATFONT, 22, "Press N to scan."))
     self.status_text:SetColour(0.92, 0.92, 0.92, 1)
@@ -223,20 +223,20 @@ local GIMWidget = Class(Widget, function(self, owner, hud)
     self.status_text:SetHAlign(_G.ANCHOR_MIDDLE)
 
     self.column_item = self.panel:AddChild(Text(_G.CHATFONT, 22, "Item"))
-    self.column_item:SetColour(0.8, 0.8, 0.8, 1)
-    self.column_item:SetPosition(-316, 133, 0)
+    self.column_item:SetColour(0.86, 0.86, 0.86, 1)
+    self.column_item:SetPosition(-314, 131, 0)
     self.column_item:SetRegionSize(200, 28)
     self.column_item:SetHAlign(_G.ANCHOR_LEFT)
 
     self.column_prefab = self.panel:AddChild(Text(_G.CHATFONT, 22, "Prefab"))
-    self.column_prefab:SetColour(0.8, 0.8, 0.8, 1)
-    self.column_prefab:SetPosition(-68, 133, 0)
+    self.column_prefab:SetColour(0.86, 0.86, 0.86, 1)
+    self.column_prefab:SetPosition(-76, 131, 0)
     self.column_prefab:SetRegionSize(230, 28)
     self.column_prefab:SetHAlign(_G.ANCHOR_LEFT)
 
     self.column_count = self.panel:AddChild(Text(_G.CHATFONT, 22, "Count"))
-    self.column_count:SetColour(0.8, 0.8, 0.8, 1)
-    self.column_count:SetPosition(176, 133, 0)
+    self.column_count:SetColour(0.86, 0.86, 0.86, 1)
+    self.column_count:SetPosition(172, 131, 0)
     self.column_count:SetRegionSize(90, 28)
     self.column_count:SetHAlign(_G.ANCHOR_RIGHT)
 
@@ -253,7 +253,7 @@ local GIMWidget = Class(Widget, function(self, owner, hud)
     self.footer:SetHAlign(_G.ANCHOR_LEFT)
 
     self.list_root = self.panel:AddChild(Widget("gim_list_root"))
-    self.list_root:SetPosition(0, -22, 0)
+    self.list_root:SetPosition(0, -40, 0)
 
     self.rows = {}
     local top_y = LIST_CONTENT_HEIGHT * 0.5 - ROW_HEIGHT * 0.5

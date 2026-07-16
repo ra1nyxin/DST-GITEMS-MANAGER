@@ -27,6 +27,12 @@ Server-side dropped item manager focused on practical shard cleanup and retrieva
 - 已记录：原版滚动条和默认按钮在这种实时更新列表里交互边界不太稳；当前版本已经换成自绘长方形按钮和固定行翻页，尽量减少 hover/拖动时的崩溃面。
 - 已记录：HUD 布局里不要把翻页按钮、页码、关闭提示和列表内容混在同一块自由摆放；拆成 header/list/footer 三段再做固定列对齐会稳很多。
 - 已记录：DST 这类 HUD widget 不是天然裁剪容器，列表行如果总高度超出真正的 viewport，就会直接视觉上盖到状态文字、列头和 footer；所以行数、行高、间距要先把几何算对，再谈细节排版。
+- 入口在 `modmain.lua`，先 `modimport("scripts/gim.lua")`，再用 `AddClassPostConstruct("screens/playerhud", ...)` 把客户端 HUD 面板挂进去。
+- 按键切换是包 `PlayerHUD:OnRawKey` 接 `N`，不要直接假设 dedicated shard 能加载 HUD 脚本。
+- 客户端到服务端的请求入口是 `request_scan`、`cancel_scan`、`request_pickup` 三个 `ModRPC`。
+- 服务端回包走 `scan_begin`、`scan_chunk`、`scan_complete`、`pickup_result` 四个 `ClientModRPC`。
+- 分帧扫描靠 `player:DoTaskInTime(0, ...)` 跑 `Ents`，拾取容量判断靠 `inventory:CanAcceptCount` + `inventory:GiveItem`，兼容大堆叠也是跟着这套真实库存接口走。
+- 玩家扫描态挂在 `player._gim_scan_open / _gim_scan_serial / _gim_scan_state / _gim_scan_task`，回看取消和重扫问题先查这里。
 
 English
 
@@ -53,3 +59,11 @@ Notes:
 - Recorded pitfall: stock scrollbars and default button skins can be brittle inside live-updating custom lists, so this version switches to drawn rectangular buttons and fixed-row paging for a safer interaction path.
 - Recorded pitfall: do not let paging controls, page text, close hints, and row content share one loose layout block; a dedicated header/list/footer split with fixed columns is much more stable.
 - Recorded pitfall: DST HUD widgets are not automatic clipping containers. If the total row stack exceeds the actual viewport, rows will visibly cover the status line, column labels, and footer, so row count, row height, and spacing have to fit the geometry first.
+- Bootstrap path: `modmain.lua` -> `modimport("scripts/gim.lua")`.
+- HUD injection: `AddClassPostConstruct("screens/playerhud", ...)`.
+- Toggle key hook: wrapped `PlayerHUD:OnRawKey` on `KEY_N`.
+- Client to server RPCs: `request_scan`, `cancel_scan`, `request_pickup`.
+- Server to client RPCs: `scan_begin`, `scan_chunk`, `scan_complete`, `pickup_result`.
+- Scan slicing: `player:DoTaskInTime(0, ...)` over `Ents` in batches.
+- Capacity check path: `inventory:CanAcceptCount(...)` -> optional `stackable:Get(...)` -> `inventory:GiveItem(...)`.
+- Player scan state fields: `_gim_scan_open`, `_gim_scan_serial`, `_gim_scan_state`, `_gim_scan_task`.
