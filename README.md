@@ -19,6 +19,7 @@
 - 已记录：dedicated server 不该去 `require("widgets/...")` 这类本地 HUD 脚本；UI 注入逻辑必须先做 `not TheNet:IsDedicated()` 之类的隔离，否则 shard 启动时就可能直接炸在 mod 加载阶段。
 - 已记录：被 `require` 的子脚本在 DST strict 环境里不要顶层裸用 `GLOBAL`；像 widget/helper 这种文件更稳的写法是 `local _G = _G`，否则很容易报 `variable 'GLOBAL' is not declared` 并把开房流程打断。
 - 已记录：不要默认以为原生 Lua 全局在 mod 环境里都能直接用；这次 `rawget(_G, "TheNet")` 就在启动期报了 `attempt to call global 'rawget' (a nil value)`，所以这类读取优先直接写成 `_G.TheNet` 更稳。
+- 已记录：原版 `ScrollableList` 在走 `updatefn + static_widgets` 这套模式时，不会自动把那些行 widget 挂进显示树；如果只传数组不 `AddChild`，就会出现“扫描统计有数，但列表一项都不显示”的假空列表问题。
 
 实现记录：
 - `modmain.lua` 通过 `AddClassPostConstruct("screens/playerhud", ...)` 把 `GIM` 挂到本地 HUD 上，并用 `OnRawKey` 接 `N` 键切换。
@@ -31,6 +32,7 @@
 - 当前已经专门把 HUD 注入限制在非 dedicated 环境，避免服务端进程误加载本地界面脚本。
 - 当前 `scripts/widgets/gimwidget.lua` 也已经避开 strict 环境下对 `GLOBAL` 的顶层裸读写法。
 - 当前 `modmain.lua` 里对 `TheNet` 的读取也已经回退成直接 `_G.TheNet`，不再依赖 `rawget` 这种在 mod 环境里不一定存在的全局函数。
+- 当前 `ScrollableList` 使用的每一行静态 widget 也已经显式挂进 `scroll_list`，避免列表数据正常但行控件根本没显示出来。
 
 Current features:
 - Every player with the mod installed can press `N` to open the `GIM` panel.
@@ -52,3 +54,4 @@ Notes:
 - Recorded pitfall: dedicated server shards should not `require` local HUD widget modules. Client UI hooks need an explicit `not TheNet:IsDedicated()` style guard.
 - Recorded pitfall: under DST strict mode, required helper/widget files should avoid top-level `GLOBAL` reads; `local _G = _G` is the safer pattern there.
 - Recorded pitfall: do not assume every vanilla Lua global is exposed in the mod environment. This build hit `attempt to call global 'rawget' (a nil value)`, so `_G.TheNet` is the safer read pattern here.
+- Recorded pitfall: vanilla `ScrollableList` does not automatically parent `static_widgets` into the visible widget tree. If you only pass the row array without `AddChild`, the scan can report valid counts while the list still renders as empty.

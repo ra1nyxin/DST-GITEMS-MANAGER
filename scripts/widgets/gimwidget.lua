@@ -112,14 +112,20 @@ local GIMWidget = Class(Widget, function(self, owner, hud)
 
     self.blocker = self:AddChild(Image("images/ui.xml", "blank.tex"))
     self.blocker:ScaleToSize(2000, 1200)
-    self.blocker:SetTint(0, 0, 0, 0.22)
+    self.blocker:SetTint(0, 0, 0, 0.42)
 
     self.panel = self:AddChild(Widget("gim_panel"))
 
     self.panel_bg = self.panel:AddChild(Image("images/ui.xml", "blank.tex"))
     self.panel_bg:ScaleToSize(PANEL_WIDTH, PANEL_HEIGHT)
-    self.panel_bg:SetTint(0.03, 0.03, 0.03, 0.94)
+    self.panel_bg:SetTint(0.01, 0.01, 0.01, 0.97)
     self.panel_bg:SetClickable(false)
+
+    self.header_band = self.panel:AddChild(Image("images/ui.xml", "blank.tex"))
+    self.header_band:ScaleToSize(PANEL_WIDTH - 36, 96)
+    self.header_band:SetPosition(0, 222, 0)
+    self.header_band:SetTint(0.08, 0.08, 0.08, 0.95)
+    self.header_band:SetClickable(false)
 
     self.header = self.panel:AddChild(Text(_G.CHATFONT, 40, "GIM"))
     self.header:SetPosition(-380, 255, 0)
@@ -137,6 +143,12 @@ local GIMWidget = Class(Widget, function(self, owner, hud)
     self.status_text:SetPosition(0, 172, 0)
     self.status_text:SetRegionSize(760, 32)
     self.status_text:SetHAlign(_G.ANCHOR_MIDDLE)
+
+    self.list_bg = self.panel:AddChild(Image("images/ui.xml", "blank.tex"))
+    self.list_bg:ScaleToSize(LIST_WIDTH + 28, LIST_HEIGHT + 26)
+    self.list_bg:SetPosition(0, -35, 0)
+    self.list_bg:SetTint(0.05, 0.05, 0.05, 0.97)
+    self.list_bg:SetClickable(false)
 
     self.rows = {}
     for i = 1, ROW_VISIBLE_COUNT do
@@ -164,6 +176,9 @@ local GIMWidget = Class(Widget, function(self, owner, hud)
         "BLACK"
     ))
     self.scroll_list:SetPosition(0, -35, 0)
+    for i = 1, ROW_VISIBLE_COUNT do
+        self.scroll_list:AddChild(self.rows[i])
+    end
     self.scroll_list:LayOutStaticWidgets(-6, false, true)
 
     self.footer = self.panel:AddChild(Text(_G.CHATFONT, 20, "Sorted by total count, highest first."))

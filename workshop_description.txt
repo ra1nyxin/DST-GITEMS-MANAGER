@@ -22,6 +22,7 @@ Server-side dropped item manager focused on practical shard cleanup and retrieva
 - 已记录：dedicated server 不该去加载本地 HUD widget，UI 注入逻辑必须先做 `not TheNet:IsDedicated()` 这类隔离。
 - 已记录：被 `require` 的子脚本在 strict 环境里不要顶层裸用 `GLOBAL`；更稳的写法是 `local _G = _G`，否则可能直接把 shard 启动打崩。
 - 已记录：不要默认认为原生 Lua 全局在 mod 环境里都还在；这次 `rawget(_G, "TheNet")` 就直接报了 `rawget` 是 nil，所以这里回退成了更稳的 `_G.TheNet`。
+- 已记录：原版 `ScrollableList` 走 `static_widgets` 模式时不会自动把行控件挂进显示树；如果忘了手动 `AddChild`，就会出现统计有数但列表看起来全空的假象。
 
 English
 
@@ -43,3 +44,4 @@ Notes:
 - Recorded pitfall: dedicated server shards should not load local HUD widget modules, so the UI hook is guarded on non-dedicated environments only.
 - Recorded pitfall: under DST strict mode, required helper/widget files should avoid top-level `GLOBAL` reads and prefer `local _G = _G`.
 - Recorded pitfall: do not assume every stock Lua global is available inside the mod environment; this mod hit `rawget` being nil during startup, so direct `_G.TheNet` access is the safer path here.
+- Recorded pitfall: vanilla `ScrollableList` does not automatically parent `static_widgets`, so forgetting to `AddChild` the row widgets can leave you with valid scan totals and an apparently empty list.
