@@ -25,6 +25,7 @@ Server-side dropped item manager focused on practical shard cleanup and retrieva
 - 已记录：原版 `ScrollableList` 走 `static_widgets` 模式时不会自动把行控件挂进显示树；如果忘了手动 `AddChild`，就会出现统计有数但列表看起来全空的假象。
 - 已记录：`images/ui.xml` 里的 `blank.tex` 更适合透明占位，不适合拿来做真正可见的背景底；要做实色底板，`images/global.xml` 里的 `square.tex` 更稳。
 - 已记录：原版滚动条和默认按钮在这种实时更新列表里交互边界不太稳；当前版本已经换成自绘长方形按钮和固定行翻页，尽量减少 hover/拖动时的崩溃面。
+- 已记录：HUD 布局里不要把翻页按钮、页码、关闭提示和列表内容混在同一块自由摆放；拆成 header/list/footer 三段再做固定列对齐会稳很多。
 
 English
 
@@ -49,3 +50,4 @@ Notes:
 - Recorded pitfall: vanilla `ScrollableList` does not automatically parent `static_widgets`, so forgetting to `AddChild` the row widgets can leave you with valid scan totals and an apparently empty list.
 - Recorded pitfall: `images/ui.xml` `blank.tex` is better treated as a transparent placeholder than a real visible panel fill, so solid backgrounds should use `images/global.xml` `square.tex`.
 - Recorded pitfall: stock scrollbars and default button skins can be brittle inside live-updating custom lists, so this version switches to drawn rectangular buttons and fixed-row paging for a safer interaction path.
+- Recorded pitfall: do not let paging controls, page text, close hints, and row content share one loose layout block; a dedicated header/list/footer split with fixed columns is much more stable.
