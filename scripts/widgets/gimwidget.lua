@@ -206,13 +206,13 @@ local GIMWidget = Class(Widget, function(self, owner, hud)
     self.footer_band:SetClickable(false)
 
     self.header = self.panel:AddChild(Text(_G.CHATFONT, 40, "GIM"))
-    self.header:SetPosition(-316, 252, 0)
+    self.header:SetPosition(-286, 252, 0)
     self.header:SetHAlign(_G.ANCHOR_LEFT)
     self.header:SetRegionSize(300, 48)
 
     self.subheader = self.panel:AddChild(Text(_G.CHATFONT, 20, "Open: N   Close: N   Scope: current shard"))
     self.subheader:SetColour(0.78, 0.78, 0.78, 1)
-    self.subheader:SetPosition(-108, 218, 0)
+    self.subheader:SetPosition(-78, 218, 0)
     self.subheader:SetHAlign(_G.ANCHOR_LEFT)
     self.subheader:SetRegionSize(660, 28)
 
@@ -248,7 +248,7 @@ local GIMWidget = Class(Widget, function(self, owner, hud)
 
     self.footer = self.panel:AddChild(Text(_G.CHATFONT, 20, "Sorted by total count, highest first."))
     self.footer:SetColour(0.72, 0.72, 0.72, 1)
-    self.footer:SetPosition(-286, -262, 0)
+    self.footer:SetPosition(-246, -262, 0)
     self.footer:SetRegionSize(360, 28)
     self.footer:SetHAlign(_G.ANCHOR_LEFT)
 
