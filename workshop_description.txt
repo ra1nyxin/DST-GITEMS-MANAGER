@@ -19,6 +19,8 @@ Server-side dropped item manager focused on practical shard cleanup and retrieva
 - 当前 UI 刻意保持朴素，不带额外贴图资源，重点是够用和稳定。
 - 这是服务端模组，不是 clientOnly；客户端也需要安装。
 - 当前版本没有做外部配置文件开关。
+- 已记录：dedicated server 不该去加载本地 HUD widget，UI 注入逻辑必须先做 `not TheNet:IsDedicated()` 这类隔离。
+- 已记录：被 `require` 的子脚本在 strict 环境里不要顶层裸用 `GLOBAL`；更稳的写法是 `local _G = _G`，否则可能直接把 shard 启动打崩。
 
 English
 
@@ -37,3 +39,5 @@ Notes:
 - Counts use real stack size rather than just ground entity count.
 - The UI is intentionally plain and asset-free in this version.
 - This is a server-side mod, not a client-only one, so clients also need the mod installed.
+- Recorded pitfall: dedicated server shards should not load local HUD widget modules, so the UI hook is guarded on non-dedicated environments only.
+- Recorded pitfall: under DST strict mode, required helper/widget files should avoid top-level `GLOBAL` reads and prefer `local _G = _G`.
