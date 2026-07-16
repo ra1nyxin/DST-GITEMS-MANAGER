@@ -18,6 +18,7 @@
 - 当前版本没有做外部配置文件开关。
 - 已记录：dedicated server 不该去 `require("widgets/...")` 这类本地 HUD 脚本；UI 注入逻辑必须先做 `not TheNet:IsDedicated()` 之类的隔离，否则 shard 启动时就可能直接炸在 mod 加载阶段。
 - 已记录：被 `require` 的子脚本在 DST strict 环境里不要顶层裸用 `GLOBAL`；像 widget/helper 这种文件更稳的写法是 `local _G = _G`，否则很容易报 `variable 'GLOBAL' is not declared` 并把开房流程打断。
+- 已记录：不要默认以为原生 Lua 全局在 mod 环境里都能直接用；这次 `rawget(_G, "TheNet")` 就在启动期报了 `attempt to call global 'rawget' (a nil value)`，所以这类读取优先直接写成 `_G.TheNet` 更稳。
 
 实现记录：
 - `modmain.lua` 通过 `AddClassPostConstruct("screens/playerhud", ...)` 把 `GIM` 挂到本地 HUD 上，并用 `OnRawKey` 接 `N` 键切换。
@@ -29,6 +30,7 @@
 - 客户端列表界面集中在 `scripts/widgets/gimwidget.lua`，使用原版 `ScrollableList`、`ImageButton`、`Text` 做最小可用实现。
 - 当前已经专门把 HUD 注入限制在非 dedicated 环境，避免服务端进程误加载本地界面脚本。
 - 当前 `scripts/widgets/gimwidget.lua` 也已经避开 strict 环境下对 `GLOBAL` 的顶层裸读写法。
+- 当前 `modmain.lua` 里对 `TheNet` 的读取也已经回退成直接 `_G.TheNet`，不再依赖 `rawget` 这种在 mod 环境里不一定存在的全局函数。
 
 Current features:
 - Every player with the mod installed can press `N` to open the `GIM` panel.
@@ -49,3 +51,4 @@ Notes:
 - There are no external configuration options in this build.
 - Recorded pitfall: dedicated server shards should not `require` local HUD widget modules. Client UI hooks need an explicit `not TheNet:IsDedicated()` style guard.
 - Recorded pitfall: under DST strict mode, required helper/widget files should avoid top-level `GLOBAL` reads; `local _G = _G` is the safer pattern there.
+- Recorded pitfall: do not assume every vanilla Lua global is exposed in the mod environment. This build hit `attempt to call global 'rawget' (a nil value)`, so `_G.TheNet` is the safer read pattern here.

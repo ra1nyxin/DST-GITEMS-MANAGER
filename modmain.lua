@@ -1,7 +1,7 @@
 modimport("scripts/gim.lua")
 
 local _G = GLOBAL
-local TheNet = rawget(_G, "TheNet")
+local TheNet = _G.TheNet
 
 if TheNet ~= nil and not TheNet:IsDedicated() then
     local GIMWidget = require("widgets/gimwidget")
