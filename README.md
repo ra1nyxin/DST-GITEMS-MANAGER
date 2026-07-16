@@ -23,6 +23,7 @@
 - 已记录：`images/ui.xml` 里的 `blank.tex` 更接近透明点击占位，不适合拿来做真正可见的面板底板；要做稳定可见的纯色背景，用 `images/global.xml` 的 `square.tex` 这类实心贴图更稳。
 - 已记录：这类实时列表里，原版滚动条和默认按钮贴图有时候交互边界不稳，尤其是自定义行内按钮和滚动同时存在时；当前版本已经改成自绘长方形按钮 + 固定行渲染，尽量减少 hover/拖动类崩溃面。
 - 已记录：HUD 布局不要把翻页按钮、页码、关闭提示和列表内容混在同一块自由摆放；最好拆成独立 header/list/footer 分区，再做固定列对齐，不然后期很容易互相压住。
+- 已记录：DST 这类 HUD widget 不是天然裁剪容器，列表行如果总高度超出预留 viewport，就会直接视觉上盖到状态栏、列头和 footer；行数、行高、间距必须先把几何账算平再摆控件。
 
 实现记录：
 - `modmain.lua` 通过 `AddClassPostConstruct("screens/playerhud", ...)` 把 `GIM` 挂到本地 HUD 上，并用 `OnRawKey` 接 `N` 键切换。
@@ -64,3 +65,4 @@ Notes:
 - Recorded pitfall: `images/ui.xml` `blank.tex` behaves more like a transparent placeholder than a real visible panel fill, so stable opaque UI backgrounds should use a solid texture such as `images/global.xml` `square.tex`.
 - Recorded pitfall: stock scrollbars and default button skins can become brittle in custom live-updating row lists. This build now uses drawn rectangular buttons plus fixed-row paging to reduce hover and drag failure cases.
 - Recorded pitfall: do not let paging buttons, page text, close hints, and row content float in the same loose layout block. A separate header/list/footer split with fixed columns stays far more stable.
+- Recorded pitfall: DST HUD widgets are not automatic clipping containers. If the total row stack exceeds the real viewport, rows will visually cover the status line, column labels, and footer, so row count, row height, and spacing need to fit the geometry before any fine-tuning.

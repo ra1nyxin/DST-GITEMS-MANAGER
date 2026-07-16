@@ -11,10 +11,11 @@ local PANEL_TEX = "square.tex"
 local PANEL_WIDTH = 920
 local PANEL_HEIGHT = 620
 local LIST_WIDTH = 820
-local LIST_HEIGHT = 392
-local ROW_HEIGHT = 48
-local ROW_PADDING = 8
-local ROW_VISIBLE_COUNT = 8
+local ROW_HEIGHT = 42
+local ROW_PADDING = 6
+local ROW_VISIBLE_COUNT = 7
+local LIST_CONTENT_HEIGHT = ROW_VISIBLE_COUNT * ROW_HEIGHT + (ROW_VISIBLE_COUNT - 1) * ROW_PADDING
+local LIST_HEIGHT = LIST_CONTENT_HEIGHT + 30
 
 local function GetNow()
     return _G.GetTime ~= nil and _G.GetTime() or 0
@@ -93,34 +94,34 @@ local GIMRow = Class(Widget, function(self, owner, onclick)
     self.data = nil
 
     self.bg = self:AddChild(Image(PANEL_ATLAS, PANEL_TEX))
-    self.bg:ScaleToSize(740, ROW_HEIGHT)
+    self.bg:ScaleToSize(804, ROW_HEIGHT)
     self.bg:SetTint(0.08, 0.08, 0.08, 0.96)
     self.bg:SetClickable(false)
 
-    self.name_text = self:AddChild(Text(_G.CHATFONT, 28, ""))
+    self.name_text = self:AddChild(Text(_G.CHATFONT, 24, ""))
     self.name_text:SetColour(0.95, 0.95, 0.95, 1)
     self.name_text:SetHAlign(_G.ANCHOR_LEFT)
-    self.name_text:SetRegionSize(250, 36)
-    self.name_text:SetPosition(-245, 0, 0)
+    self.name_text:SetRegionSize(260, 34)
+    self.name_text:SetPosition(-282, 0, 0)
 
-    self.prefab_text = self:AddChild(Text(_G.CHATFONT, 20, ""))
+    self.prefab_text = self:AddChild(Text(_G.CHATFONT, 18, ""))
     self.prefab_text:SetColour(0.72, 0.72, 0.72, 1)
     self.prefab_text:SetHAlign(_G.ANCHOR_LEFT)
-    self.prefab_text:SetRegionSize(250, 30)
-    self.prefab_text:SetPosition(5, 0, 0)
+    self.prefab_text:SetRegionSize(250, 28)
+    self.prefab_text:SetPosition(-34, 0, 0)
 
-    self.count_text = self:AddChild(Text(_G.CHATFONT, 24, ""))
+    self.count_text = self:AddChild(Text(_G.CHATFONT, 22, ""))
     self.count_text:SetColour(0.92, 0.86, 0.58, 1)
     self.count_text:SetHAlign(_G.ANCHOR_RIGHT)
-    self.count_text:SetRegionSize(86, 32)
-    self.count_text:SetPosition(220, 0, 0)
+    self.count_text:SetRegionSize(90, 30)
+    self.count_text:SetPosition(218, 0, 0)
 
-    self.button = self:AddChild(RectButton(118, 34, "Take", function()
+    self.button = self:AddChild(RectButton(110, 32, "Take", function()
         if self.data ~= nil and self.onclick ~= nil then
             self.onclick(self.data.prefab)
         end
     end))
-    self.button:SetPosition(318, 0, 0)
+    self.button:SetPosition(332, 0, 0)
 end)
 
 function GIMRow:SetData(data, row_index)
@@ -175,87 +176,87 @@ local GIMWidget = Class(Widget, function(self, owner, hud)
     self.panel_bg:SetClickable(false)
 
     self.header_band = self.panel:AddChild(Image(PANEL_ATLAS, PANEL_TEX))
-    self.header_band:ScaleToSize(PANEL_WIDTH - 36, 104)
-    self.header_band:SetPosition(0, 225, 0)
+    self.header_band:ScaleToSize(PANEL_WIDTH - 36, 92)
+    self.header_band:SetPosition(0, 236, 0)
     self.header_band:SetTint(0.09, 0.09, 0.09, 0.985)
     self.header_band:SetClickable(false)
 
     self.status_band = self.panel:AddChild(Image(PANEL_ATLAS, PANEL_TEX))
-    self.status_band:ScaleToSize(PANEL_WIDTH - 36, 62)
-    self.status_band:SetPosition(0, 154, 0)
+    self.status_band:ScaleToSize(PANEL_WIDTH - 36, 48)
+    self.status_band:SetPosition(0, 176, 0)
     self.status_band:SetTint(0.07, 0.07, 0.07, 0.985)
     self.status_band:SetClickable(false)
 
+    self.column_band = self.panel:AddChild(Image(PANEL_ATLAS, PANEL_TEX))
+    self.column_band:ScaleToSize(LIST_WIDTH + 28, 34)
+    self.column_band:SetPosition(0, 133, 0)
+    self.column_band:SetTint(0.06, 0.06, 0.06, 0.985)
+    self.column_band:SetClickable(false)
+
     self.list_bg = self.panel:AddChild(Image(PANEL_ATLAS, PANEL_TEX))
-    self.list_bg:ScaleToSize(LIST_WIDTH + 28, LIST_HEIGHT + 72)
-    self.list_bg:SetPosition(0, -18, 0)
+    self.list_bg:ScaleToSize(LIST_WIDTH + 28, LIST_HEIGHT)
+    self.list_bg:SetPosition(0, -22, 0)
     self.list_bg:SetTint(0.05, 0.05, 0.05, 0.985)
     self.list_bg:SetClickable(false)
 
     self.footer_band = self.panel:AddChild(Image(PANEL_ATLAS, PANEL_TEX))
-    self.footer_band:ScaleToSize(PANEL_WIDTH - 36, 72)
-    self.footer_band:SetPosition(0, -260, 0)
+    self.footer_band:ScaleToSize(PANEL_WIDTH - 36, 58)
+    self.footer_band:SetPosition(0, -262, 0)
     self.footer_band:SetTint(0.075, 0.075, 0.075, 0.985)
     self.footer_band:SetClickable(false)
 
     self.header = self.panel:AddChild(Text(_G.CHATFONT, 40, "GIM"))
-    self.header:SetPosition(-328, 255, 0)
+    self.header:SetPosition(-344, 252, 0)
     self.header:SetHAlign(_G.ANCHOR_LEFT)
     self.header:SetRegionSize(300, 48)
 
-    self.subheader = self.panel:AddChild(Text(_G.CHATFONT, 22, "Open: N   Scope: current shard"))
+    self.subheader = self.panel:AddChild(Text(_G.CHATFONT, 20, "Open: N   Close: N   Scope: current shard"))
     self.subheader:SetColour(0.78, 0.78, 0.78, 1)
-    self.subheader:SetPosition(-194, 214, 0)
+    self.subheader:SetPosition(-160, 218, 0)
     self.subheader:SetHAlign(_G.ANCHOR_LEFT)
-    self.subheader:SetRegionSize(620, 30)
+    self.subheader:SetRegionSize(700, 28)
 
-    self.status_text = self.panel:AddChild(Text(_G.CHATFONT, 24, "Press N to scan."))
+    self.status_text = self.panel:AddChild(Text(_G.CHATFONT, 22, "Press N to scan."))
     self.status_text:SetColour(0.92, 0.92, 0.92, 1)
-    self.status_text:SetPosition(0, 154, 0)
-    self.status_text:SetRegionSize(780, 32)
+    self.status_text:SetPosition(0, 176, 0)
+    self.status_text:SetRegionSize(790, 30)
     self.status_text:SetHAlign(_G.ANCHOR_MIDDLE)
 
     self.column_item = self.panel:AddChild(Text(_G.CHATFONT, 22, "Item"))
     self.column_item:SetColour(0.8, 0.8, 0.8, 1)
-    self.column_item:SetPosition(-278, 110, 0)
+    self.column_item:SetPosition(-316, 133, 0)
     self.column_item:SetRegionSize(200, 28)
     self.column_item:SetHAlign(_G.ANCHOR_LEFT)
 
     self.column_prefab = self.panel:AddChild(Text(_G.CHATFONT, 22, "Prefab"))
     self.column_prefab:SetColour(0.8, 0.8, 0.8, 1)
-    self.column_prefab:SetPosition(-28, 110, 0)
+    self.column_prefab:SetPosition(-68, 133, 0)
     self.column_prefab:SetRegionSize(230, 28)
     self.column_prefab:SetHAlign(_G.ANCHOR_LEFT)
 
     self.column_count = self.panel:AddChild(Text(_G.CHATFONT, 22, "Count"))
     self.column_count:SetColour(0.8, 0.8, 0.8, 1)
-    self.column_count:SetPosition(210, 110, 0)
+    self.column_count:SetPosition(176, 133, 0)
     self.column_count:SetRegionSize(90, 28)
     self.column_count:SetHAlign(_G.ANCHOR_RIGHT)
 
     self.page_text = self.panel:AddChild(Text(_G.CHATFONT, 20, "0 / 0"))
     self.page_text:SetColour(0.74, 0.74, 0.74, 1)
-    self.page_text:SetPosition(0, -261, 0)
-    self.page_text:SetRegionSize(220, 28)
+    self.page_text:SetPosition(58, -262, 0)
+    self.page_text:SetRegionSize(180, 28)
     self.page_text:SetHAlign(_G.ANCHOR_MIDDLE)
 
     self.footer = self.panel:AddChild(Text(_G.CHATFONT, 20, "Sorted by total count, highest first."))
     self.footer:SetColour(0.72, 0.72, 0.72, 1)
-    self.footer:SetPosition(-328, -261, 0)
-    self.footer:SetRegionSize(280, 28)
+    self.footer:SetPosition(-286, -262, 0)
+    self.footer:SetRegionSize(360, 28)
     self.footer:SetHAlign(_G.ANCHOR_LEFT)
 
-    self.close_hint = self.panel:AddChild(Text(_G.CHATFONT, 20, "Press N again to close."))
-    self.close_hint:SetColour(0.72, 0.72, 0.72, 1)
-    self.close_hint:SetPosition(330, -261, 0)
-    self.close_hint:SetRegionSize(220, 28)
-    self.close_hint:SetHAlign(_G.ANCHOR_RIGHT)
-
     self.list_root = self.panel:AddChild(Widget("gim_list_root"))
-    self.list_root:SetPosition(0, -48, 0)
+    self.list_root:SetPosition(0, -22, 0)
 
     self.rows = {}
-    local top_y = LIST_HEIGHT * 0.5 - 16
+    local top_y = LIST_CONTENT_HEIGHT * 0.5 - ROW_HEIGHT * 0.5
     for i = 1, ROW_VISIBLE_COUNT do
         local row = self.list_root:AddChild(GIMRow(self.owner, function(prefab)
             self:RequestPickup(prefab)
@@ -267,12 +268,12 @@ local GIMWidget = Class(Widget, function(self, owner, hud)
     self.scroll_up = self.panel:AddChild(RectButton(118, 34, "Prev", function()
         self:ScrollBy(-1)
     end))
-    self.scroll_up:SetPosition(190, -261, 0)
+    self.scroll_up:SetPosition(252, -262, 0)
 
     self.scroll_down = self.panel:AddChild(RectButton(118, 34, "Next", function()
         self:ScrollBy(1)
     end))
-    self.scroll_down:SetPosition(318, -261, 0)
+    self.scroll_down:SetPosition(382, -262, 0)
 
     self:Hide()
 end)

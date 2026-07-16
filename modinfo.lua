@@ -13,7 +13,7 @@ Current features:
 - Closing the panel while scanning cancels the active scan instead of finishing in the background.
 ]]
 author = "ra1nyxin"
-version = "0.1.7"
+version = "0.1.8"
 
 forumthread = ""
 api_version = 10
