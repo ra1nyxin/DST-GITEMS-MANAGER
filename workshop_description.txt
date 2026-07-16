@@ -1,0 +1,39 @@
+DST-GITEMS-MANAGER
+
+Server-side dropped item manager focused on practical shard cleanup and retrieval.
+
+中文
+
+当前功能：
+- 房间内所有玩家都可以按 `N` 打开 `GIM`。
+- `GIM` 只在面板打开时才开始扫描当前玩家所在 shard 里的地面掉落物。
+- 扫描过程中再次按 `N` 关闭面板，会立刻中断当前扫描。
+- 列表会把当前 shard 的所有地面掉落物按总数量从高到低排序。
+- 每个物品行都有 `Take` 按钮，可以直接往玩家物品栏和背包里拿。
+- 背包空间不够时，只会拿刚好塞得进去的那部分，不会溢出。
+- 对大堆叠环境按服务器当前真实库存规则结算，兼容常见 `99 stack` 类模组。
+
+补充说明：
+- 这里只统计当前玩家所在的 shard，主世界和洞穴分别独立看。
+- 统计按真实数量算，不是只看地上有几组实体。
+- 当前 UI 刻意保持朴素，不带额外贴图资源，重点是够用和稳定。
+- 这是服务端模组，不是 clientOnly；客户端也需要安装。
+- 当前版本没有做外部配置文件开关。
+
+English
+
+Current features:
+- Every player in the room can press `N` to open `GIM`.
+- `GIM` only starts scanning when the panel is opened.
+- The scan is limited to the current shard the player is in.
+- Pressing `N` again during scanning closes the panel and cancels the active scan immediately.
+- The list is sorted by total dropped item count from highest to lowest.
+- Every row has a `Take` button that inserts that prefab into the player's inventory and backpack space.
+- If inventory space is limited, pickup only takes the amount that actually fits.
+- Larger-stack environments are handled through the live server inventory rules, including common `99 stack` style setups.
+
+Notes:
+- Only the current shard is counted, so overworld and caves stay separate.
+- Counts use real stack size rather than just ground entity count.
+- The UI is intentionally plain and asset-free in this version.
+- This is a server-side mod, not a client-only one, so clients also need the mod installed.
