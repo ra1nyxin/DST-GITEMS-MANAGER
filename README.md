@@ -1,4 +1,6 @@
-这是一个偏向服务器内地面掉落物管理的小模组喵。
+<img width="100%" height="100%" alt="image" src="https://github.com/user-attachments/assets/16f35967-8770-41d7-80a3-d88571e6ae2b" />
+
+这是一个服务器内地面掉落物管理的小模组喵。
 
 当前功能：
 - 房间内所有安装了模组的玩家都可以按 `N` 打开 `GIM` 面板。
@@ -8,7 +10,6 @@
 - 每一行都可以直接点 `Take` 把该 prefab 的地面物品往玩家物品栏和背包里塞。
 - 如果背包空间不够，就只拿得下当前实际还能装进去的那部分，不会溢出。
 - 兼容常见的大堆叠环境，像 `99 stack` 这类改堆叠上限的服里，会按服务器当前真实堆叠规则判断还能拿多少。
-- 这是服务端模组，不是 clientOnly；所有客户端都需要安装。
 
 说明：
 - 这里只统计“当前玩家所在 shard”里的地面掉落物，也就是主世界只看主世界，洞穴只看洞穴。
@@ -60,7 +61,6 @@ Current features:
 - Each row can directly `Take` that prefab into the player's inventory and overflow container space.
 - If the inventory is nearly full, pickup only takes the amount that still fits.
 - Common larger-stack environments such as `99 stack` style servers are handled by following the live server inventory and stack rules.
-- This is a server-side mod, not a client-only one, so all clients need the mod installed.
 
 Notes:
 - The scan covers only the shard the current player is in, so overworld and caves are counted separately.
