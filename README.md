@@ -3,9 +3,9 @@
 这是一个服务器内地面掉落物管理的小模组喵。
 
 当前功能：
-- 房间内所有安装了模组的玩家都可以按 `N` 打开 `GIM` 面板。
+- 房间内所有安装了模组的玩家都可以按已配置快捷键打开 `GIM` 面板，默认是 `N`。
 - `GIM` 只会在面板打开时才开始扫描玩家当前所在 shard 里的地面掉落物。
-- 如果扫描过程中再次按 `N` 关闭面板，会立刻中断当前扫描，不会继续后台扫完。
+- 如果扫描过程中再次按已配置快捷键关闭面板，会立刻中断当前扫描，不会继续后台扫完。
 - 列表会把当前 shard 内所有地面掉落物按总数量从高到低排序。
 - 每一行都可以直接点 `Take` 把该 prefab 的地面物品往玩家物品栏和背包里塞。
 - 如果背包空间不够，就只拿得下当前实际还能装进去的那部分，不会溢出。
@@ -16,7 +16,7 @@
 - 统计单位按真实物品数量算，不是按地上实体个数算；所以一组 `wood x80` 会按 `80` 计入排序。
 - 拾取时不会走人物跑过去捡的动作，而是直接按服务端库存规则塞进玩家主背包和溢出容器。
 - 当前 UI 故意做得很朴素，没有额外贴图资源，重点是稳定和够用。
-- 当前版本没有做外部配置文件开关。
+- 当前版本已经支持在游戏内模组配置里修改 `GIM` 快捷键，默认是 `N`。
 - 已记录：dedicated server 不该去 `require("widgets/...")` 这类本地 HUD 脚本；UI 注入逻辑必须先做 `not TheNet:IsDedicated()` 之类的隔离，否则 shard 启动时就可能直接炸在 mod 加载阶段。
 - 已记录：被 `require` 的子脚本在 DST strict 环境里不要顶层裸用 `GLOBAL`；像 widget/helper 这种文件更稳的写法是 `local _G = _G`，否则很容易报 `variable 'GLOBAL' is not declared` 并把开房流程打断。
 - 已记录：不要默认以为原生 Lua 全局在 mod 环境里都能直接用；这次 `rawget(_G, "TheNet")` 就在启动期报了 `attempt to call global 'rawget' (a nil value)`，所以这类读取优先直接写成 `_G.TheNet` 更稳。
@@ -27,7 +27,7 @@
 - 已记录：DST 这类 HUD widget 不是天然裁剪容器，列表行如果总高度超出预留 viewport，就会直接视觉上盖到状态栏、列头和 footer；行数、行高、间距必须先把几何账算平再摆控件。
 
 实现记录：
-- `modmain.lua` 通过 `AddClassPostConstruct("screens/playerhud", ...)` 把 `GIM` 挂到本地 HUD 上，并用 `OnRawKey` 接 `N` 键切换。
+- `modmain.lua` 通过 `AddClassPostConstruct("screens/playerhud", ...)` 把 `GIM` 挂到本地 HUD 上，并用 `OnRawKey` 接配置快捷键切换，默认 `N`。
 - 服务端扫描逻辑集中在 `scripts/gim.lua`，只在收到打开请求后才对当前 shard 的 `Ents` 做分帧扫描。
 - 扫描结果会先按 prefab 聚合数量，再按数量从高到低排序，然后通过 `ClientModRPC` 分块发回客户端。
 - 关闭面板时会给服务端发取消请求，已经排队的扫描任务会被直接丢掉，不继续结算。
@@ -43,7 +43,7 @@
 - 当前扫描完成后会在状态行直接显示本次扫描耗时秒数。
 - 当前 HUD 布局已经固定成 `header / status / column / list / footer` 五段，行数和间距按真实 viewport 几何对齐，不再靠碰运气摆坐标。
 - `modmain.lua` 入口先 `modimport("scripts/gim.lua")`，服务端扫描和 RPC 都从这里挂起。
-- HUD 注入走 `AddClassPostConstruct("screens/playerhud", ...)`，`N` 键切换则是包一层 `PlayerHUD:OnRawKey`。
+- HUD 注入走 `AddClassPostConstruct("screens/playerhud", ...)`，快捷键切换则是包一层 `PlayerHUD:OnRawKey`，默认 `N`。
 - 客户端发请求用 `SendModRPCToServer(GetModRPC(...))`，当前有 `request_scan`、`cancel_scan`、`request_pickup` 三个入口。
 - 服务端注册入口用 `AddModRPCHandler(...)`，结果回客户端则走 `SendModRPCToClient(GetClientModRPC(...), userid, ...)`。
 - 客户端接回包用 `AddClientModRPCHandler(...)`，然后把 `scan_begin / scan_chunk / scan_complete / pickup_result` 转给 `widgets/gimwidget.lua`。
@@ -53,10 +53,10 @@
 - 玩家扫描状态缓存挂在 `player._gim_scan_open / _gim_scan_serial / _gim_scan_state / _gim_scan_task`，下次回看扫描取消或重扫逻辑先找这几个字段。
 
 Current features:
-- Every player with the mod installed can press `N` to open the `GIM` panel.
+- Every player with the mod installed can press the configured hotkey to open the `GIM` panel. The default is `N`.
 - `GIM` only starts scanning when the panel is opened.
 - The scan is limited to the current shard the player is standing in.
-- Pressing `N` again while scanning closes the panel and cancels the active scan immediately.
+- Pressing the configured hotkey again while scanning closes the panel and cancels the active scan immediately.
 - The list is sorted by total dropped item count from highest to lowest.
 - Each row can directly `Take` that prefab into the player's inventory and overflow container space.
 - If the inventory is nearly full, pickup only takes the amount that still fits.
@@ -67,7 +67,7 @@ Notes:
 - Counts are based on real stack size, not just entity count on the ground.
 - Pickup does not make the character path over and loot manually; it inserts items directly through normal server inventory rules.
 - The UI is intentionally plain and asset-free in this version.
-- There are no external configuration options in this build.
+- This build now exposes an in-game mod configuration entry for the `GIM` toggle hotkey. The default is `N`.
 - Recorded pitfall: dedicated server shards should not `require` local HUD widget modules. Client UI hooks need an explicit `not TheNet:IsDedicated()` style guard.
 - Recorded pitfall: under DST strict mode, required helper/widget files should avoid top-level `GLOBAL` reads; `local _G = _G` is the safer pattern there.
 - Recorded pitfall: do not assume every vanilla Lua global is exposed in the mod environment. This build hit `attempt to call global 'rawget' (a nil value)`, so `_G.TheNet` is the safer read pattern here.
@@ -76,7 +76,7 @@ Notes:
 - Recorded pitfall: stock scrollbars and default button skins can become brittle in custom live-updating row lists. This build now uses drawn rectangular buttons plus fixed-row paging to reduce hover and drag failure cases.
 - Recorded pitfall: do not let paging buttons, page text, close hints, and row content float in the same loose layout block. A separate header/list/footer split with fixed columns stays far more stable.
 - Recorded pitfall: DST HUD widgets are not automatic clipping containers. If the total row stack exceeds the real viewport, rows will visually cover the status line, column labels, and footer, so row count, row height, and spacing need to fit the geometry before any fine-tuning.
-- `modmain.lua` is the bootstrap. It `modimport`s `scripts/gim.lua`, injects the HUD widget through `AddClassPostConstruct("screens/playerhud", ...)`, and wraps `PlayerHUD:OnRawKey` to toggle the panel with `N`.
+- `modmain.lua` is the bootstrap. It `modimport`s `scripts/gim.lua`, injects the HUD widget through `AddClassPostConstruct("screens/playerhud", ...)`, and wraps `PlayerHUD:OnRawKey` to toggle the panel with the configured hotkey, defaulting to `N`.
 - Client requests go up through `SendModRPCToServer(GetModRPC(...))` with `request_scan`, `cancel_scan`, and `request_pickup`.
 - Server request handlers are registered through `AddModRPCHandler(...)` in `scripts/gim.lua`.
 - Server responses go back through `SendModRPCToClient(GetClientModRPC(...), userid, ...)`, and the client receives them through `AddClientModRPCHandler(...)`.

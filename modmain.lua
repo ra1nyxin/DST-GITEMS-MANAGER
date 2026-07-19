@@ -2,9 +2,11 @@ modimport("scripts/gim.lua")
 
 local _G = GLOBAL
 local TheNet = _G.TheNet
+local GimConfig = require("gimconfig")
 
 if TheNet ~= nil and not TheNet:IsDedicated() then
     local GIMWidget = require("widgets/gimwidget")
+    local toggle_key_code = GimConfig.GetToggleKeyCode()
 
     AddClassPostConstruct("screens/playerhud", function(self)
         if self == nil or self.gim_widget ~= nil then
@@ -21,7 +23,8 @@ if TheNet ~= nil and not TheNet:IsDedicated() then
                 end
 
                 if not down
-                    and key == _G.KEY_N
+                    and toggle_key_code ~= nil
+                    and key == toggle_key_code
                     and hud.gim_widget ~= nil
                     and hud.owner ~= nil
                     and hud.owner == _G.ThePlayer

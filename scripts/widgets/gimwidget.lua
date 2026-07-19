@@ -4,6 +4,7 @@ local Widget = require("widgets/widget")
 local Image = require("widgets/image")
 local Text = require("widgets/text")
 local ImageButton = require("widgets/imagebutton")
+local GimConfig = require("gimconfig")
 
 local MOD_RPC_NAMESPACE = "dst_gitems_manager"
 local PANEL_ATLAS = "images/global.xml"
@@ -16,6 +17,7 @@ local ROW_PADDING = 4
 local ROW_VISIBLE_COUNT = 7
 local LIST_CONTENT_HEIGHT = ROW_VISIBLE_COUNT * ROW_HEIGHT + (ROW_VISIBLE_COUNT - 1) * ROW_PADDING
 local LIST_HEIGHT = LIST_CONTENT_HEIGHT + 32
+local TOGGLE_KEY_LABEL = GimConfig.GetToggleKeyLabel()
 
 local function GetNow()
     return _G.GetTime ~= nil and _G.GetTime() or 0
@@ -210,13 +212,17 @@ local GIMWidget = Class(Widget, function(self, owner, hud)
     self.header:SetHAlign(_G.ANCHOR_LEFT)
     self.header:SetRegionSize(300, 48)
 
-    self.subheader = self.panel:AddChild(Text(_G.CHATFONT, 20, "Open: N   Close: N   Scope: current shard"))
+    self.subheader = self.panel:AddChild(Text(
+        _G.CHATFONT,
+        20,
+        string.format("Open: %s   Close: %s   Scope: current shard", TOGGLE_KEY_LABEL, TOGGLE_KEY_LABEL)
+    ))
     self.subheader:SetColour(0.78, 0.78, 0.78, 1)
     self.subheader:SetPosition(-78, 218, 0)
     self.subheader:SetHAlign(_G.ANCHOR_LEFT)
     self.subheader:SetRegionSize(660, 28)
 
-    self.status_text = self.panel:AddChild(Text(_G.CHATFONT, 22, "Press N to scan."))
+    self.status_text = self.panel:AddChild(Text(_G.CHATFONT, 22, string.format("Press %s to scan.", TOGGLE_KEY_LABEL)))
     self.status_text:SetColour(0.92, 0.92, 0.92, 1)
     self.status_text:SetPosition(0, 176, 0)
     self.status_text:SetRegionSize(790, 30)

@@ -5,9 +5,9 @@ Server-side dropped item manager focused on practical shard cleanup and retrieva
 中文
 
 当前功能：
-- 房间内所有玩家都可以按 `N` 打开 `GIM`。
+- 房间内所有玩家都可以按已配置快捷键打开 `GIM`，默认是 `N`。
 - `GIM` 只在面板打开时才开始扫描当前玩家所在 shard 里的地面掉落物。
-- 扫描过程中再次按 `N` 关闭面板，会立刻中断当前扫描。
+- 扫描过程中再次按已配置快捷键关闭面板，会立刻中断当前扫描。
 - 列表会把当前 shard 的所有地面掉落物按总数量从高到低排序。
 - 每个物品行都有 `Take` 按钮，可以直接往玩家物品栏和背包里拿。
 - 背包空间不够时，只会拿刚好塞得进去的那部分，不会溢出。
@@ -18,7 +18,7 @@ Server-side dropped item manager focused on practical shard cleanup and retrieva
 - 统计按真实数量算，不是只看地上有几组实体。
 - 当前 UI 刻意保持朴素，不带额外贴图资源，重点是够用和稳定。
 - 这是服务端模组，不是 clientOnly；客户端也需要安装。
-- 当前版本没有做外部配置文件开关。
+- 当前版本已经支持在游戏内模组配置里修改 `GIM` 快捷键，默认是 `N`。
 - 已记录：dedicated server 不该去加载本地 HUD widget，UI 注入逻辑必须先做 `not TheNet:IsDedicated()` 这类隔离。
 - 已记录：被 `require` 的子脚本在 strict 环境里不要顶层裸用 `GLOBAL`；更稳的写法是 `local _G = _G`，否则可能直接把 shard 启动打崩。
 - 已记录：不要默认认为原生 Lua 全局在 mod 环境里都还在；这次 `rawget(_G, "TheNet")` 就直接报了 `rawget` 是 nil，所以这里回退成了更稳的 `_G.TheNet`。
@@ -28,7 +28,7 @@ Server-side dropped item manager focused on practical shard cleanup and retrieva
 - 已记录：HUD 布局里不要把翻页按钮、页码、关闭提示和列表内容混在同一块自由摆放；拆成 header/list/footer 三段再做固定列对齐会稳很多。
 - 已记录：DST 这类 HUD widget 不是天然裁剪容器，列表行如果总高度超出真正的 viewport，就会直接视觉上盖到状态文字、列头和 footer；所以行数、行高、间距要先把几何算对，再谈细节排版。
 - 入口在 `modmain.lua`，先 `modimport("scripts/gim.lua")`，再用 `AddClassPostConstruct("screens/playerhud", ...)` 把客户端 HUD 面板挂进去。
-- 按键切换是包 `PlayerHUD:OnRawKey` 接 `N`，不要直接假设 dedicated shard 能加载 HUD 脚本。
+- 按键切换是包 `PlayerHUD:OnRawKey` 接配置快捷键，默认 `N`，不要直接假设 dedicated shard 能加载 HUD 脚本。
 - 客户端到服务端的请求入口是 `request_scan`、`cancel_scan`、`request_pickup` 三个 `ModRPC`。
 - 服务端回包走 `scan_begin`、`scan_chunk`、`scan_complete`、`pickup_result` 四个 `ClientModRPC`。
 - 分帧扫描靠 `player:DoTaskInTime(0, ...)` 跑 `Ents`，拾取容量判断靠 `inventory:CanAcceptCount` + `inventory:GiveItem`，兼容大堆叠也是跟着这套真实库存接口走。
@@ -37,10 +37,10 @@ Server-side dropped item manager focused on practical shard cleanup and retrieva
 English
 
 Current features:
-- Every player in the room can press `N` to open `GIM`.
+- Every player in the room can press the configured hotkey to open `GIM`. The default is `N`.
 - `GIM` only starts scanning when the panel is opened.
 - The scan is limited to the current shard the player is in.
-- Pressing `N` again during scanning closes the panel and cancels the active scan immediately.
+- Pressing the configured hotkey again during scanning closes the panel and cancels the active scan immediately.
 - The list is sorted by total dropped item count from highest to lowest.
 - Every row has a `Take` button that inserts that prefab into the player's inventory and backpack space.
 - If inventory space is limited, pickup only takes the amount that actually fits.
@@ -61,7 +61,7 @@ Notes:
 - Recorded pitfall: DST HUD widgets are not automatic clipping containers. If the total row stack exceeds the actual viewport, rows will visibly cover the status line, column labels, and footer, so row count, row height, and spacing have to fit the geometry first.
 - Bootstrap path: `modmain.lua` -> `modimport("scripts/gim.lua")`.
 - HUD injection: `AddClassPostConstruct("screens/playerhud", ...)`.
-- Toggle key hook: wrapped `PlayerHUD:OnRawKey` on `KEY_N`.
+- Toggle key hook: wrapped `PlayerHUD:OnRawKey` on the configured key, default `KEY_N`.
 - Client to server RPCs: `request_scan`, `cancel_scan`, `request_pickup`.
 - Server to client RPCs: `scan_begin`, `scan_chunk`, `scan_complete`, `pickup_result`.
 - Scan slicing: `player:DoTaskInTime(0, ...)` over `Ents` in batches.
