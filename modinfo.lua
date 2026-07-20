@@ -13,7 +13,7 @@ Current features:
 - Pressing the configured hotkey again while scanning closes the panel and cancels the active scan immediately.
 ]]
 author = "ra1nyxin"
-version = "0.1.12"
+version = "0.1.13"
 
 forumthread = ""
 api_version = 10

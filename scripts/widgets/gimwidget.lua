@@ -4,7 +4,12 @@ local Widget = require("widgets/widget")
 local Image = require("widgets/image")
 local Text = require("widgets/text")
 local ImageButton = require("widgets/imagebutton")
-local GimConfig = require("gimconfig")
+local string = _G.string
+local type = _G.type
+local table = _G.table
+local math = _G.math
+local tostring = _G.tostring
+local tonumber = _G.tonumber
 
 local MOD_RPC_NAMESPACE = "dst_gitems_manager"
 local PANEL_ATLAS = "images/global.xml"
@@ -17,7 +22,6 @@ local ROW_PADDING = 4
 local ROW_VISIBLE_COUNT = 7
 local LIST_CONTENT_HEIGHT = ROW_VISIBLE_COUNT * ROW_HEIGHT + (ROW_VISIBLE_COUNT - 1) * ROW_PADDING
 local LIST_HEIGHT = LIST_CONTENT_HEIGHT + 32
-local TOGGLE_KEY_LABEL = GimConfig.GetToggleKeyLabel()
 
 local function GetNow()
     return _G.GetTime ~= nil and _G.GetTime() or 0
@@ -147,11 +151,12 @@ function GIMRow:SetData(data, row_index)
     self:Show()
 end
 
-local GIMWidget = Class(Widget, function(self, owner, hud)
+local GIMWidget = Class(Widget, function(self, owner, hud, toggle_key_label)
     Widget._ctor(self, "gim_widget")
 
     self.owner = owner
     self.hud = hud
+    self.toggle_key_label = type(toggle_key_label) == "string" and toggle_key_label ~= "" and toggle_key_label or "N"
     self.is_open = false
     self.is_scanning = false
     self.active_scan_id = 0
@@ -215,14 +220,14 @@ local GIMWidget = Class(Widget, function(self, owner, hud)
     self.subheader = self.panel:AddChild(Text(
         _G.CHATFONT,
         20,
-        string.format("Open: %s   Close: %s   Scope: current shard", TOGGLE_KEY_LABEL, TOGGLE_KEY_LABEL)
+        string.format("Open: %s   Close: %s   Scope: current shard", self.toggle_key_label, self.toggle_key_label)
     ))
     self.subheader:SetColour(0.78, 0.78, 0.78, 1)
     self.subheader:SetPosition(-78, 218, 0)
     self.subheader:SetHAlign(_G.ANCHOR_LEFT)
     self.subheader:SetRegionSize(660, 28)
 
-    self.status_text = self.panel:AddChild(Text(_G.CHATFONT, 22, string.format("Press %s to scan.", TOGGLE_KEY_LABEL)))
+    self.status_text = self.panel:AddChild(Text(_G.CHATFONT, 22, string.format("Press %s to scan.", self.toggle_key_label)))
     self.status_text:SetColour(0.92, 0.92, 0.92, 1)
     self.status_text:SetPosition(0, 176, 0)
     self.status_text:SetRegionSize(790, 30)

@@ -2,18 +2,25 @@ modimport("scripts/gim.lua")
 
 local _G = GLOBAL
 local TheNet = _G.TheNet
-local GimConfig = require("gimconfig")
+local string = _G.string
+
+local toggle_key_name = GetModConfigData ~= nil and GetModConfigData("toggle_key") or "KEY_N"
+if type(toggle_key_name) ~= "string" or toggle_key_name == "" then
+    toggle_key_name = "KEY_N"
+end
+
+local toggle_key_code = _G[toggle_key_name] or _G.KEY_N
+local toggle_key_label = string.gsub(toggle_key_name, "^KEY_", "")
 
 if TheNet ~= nil and not TheNet:IsDedicated() then
     local GIMWidget = require("widgets/gimwidget")
-    local toggle_key_code = GimConfig.GetToggleKeyCode()
 
     AddClassPostConstruct("screens/playerhud", function(self)
         if self == nil or self.gim_widget ~= nil then
             return
         end
 
-        self.gim_widget = self:AddChild(GIMWidget(self.owner, self))
+        self.gim_widget = self:AddChild(GIMWidget(self.owner, self, toggle_key_label))
 
         if self._gim_old_onrawkey == nil then
             self._gim_old_onrawkey = self.OnRawKey
