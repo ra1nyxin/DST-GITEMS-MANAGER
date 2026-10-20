@@ -7,6 +7,7 @@
 - `GIM` 只会在面板打开时才开始扫描玩家当前所在 shard 里的地面掉落物。
 - 如果扫描过程中再次按已配置快捷键关闭面板，会立刻中断当前扫描，不会继续后台扫完。
 - 列表会把当前 shard 内所有地面掉落物按总数量从高到低排序。
+- 鼠标滚轮也可以直接翻页，和 `Prev` / `Next` 按钮等价。
 - 每一行都可以直接点 `Take` 把该 prefab 的地面物品往玩家物品栏和背包里塞。
 - 如果背包空间不够，就只拿得下当前实际还能装进去的那部分，不会溢出。
 - 兼容常见的大堆叠环境，像 `99 stack` 这类改堆叠上限的服里，会按服务器当前真实堆叠规则判断还能拿多少。
@@ -58,6 +59,7 @@ Current features:
 - The scan is limited to the current shard the player is standing in.
 - Pressing the configured hotkey again while scanning closes the panel and cancels the active scan immediately.
 - The list is sorted by total dropped item count from highest to lowest.
+- The mouse wheel pages the result list the same way as the `Prev` / `Next` buttons.
 - Each row can directly `Take` that prefab into the player's inventory and overflow container space.
 - If the inventory is nearly full, pickup only takes the amount that still fits.
 - Common larger-stack environments such as `99 stack` style servers are handled by following the live server inventory and stack rules.

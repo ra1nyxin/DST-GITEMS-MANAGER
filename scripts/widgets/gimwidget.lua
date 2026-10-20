@@ -321,6 +321,22 @@ function GIMWidget:ScrollBy(delta)
     self:RefreshVisibleRows()
 end
 
+function GIMWidget:OnControl(control, down)
+    if GIMWidget._base.OnControl(self, control, down) then
+        return true
+    end
+
+    if down and self.is_open then
+        if control == _G.CONTROL_SCROLLBACK then
+            self:ScrollBy(-1)
+            return true
+        elseif control == _G.CONTROL_SCROLLFWD then
+            self:ScrollBy(1)
+            return true
+        end
+    end
+end
+
 function GIMWidget:SetStatus(text, r, g, b, a)
     self.status_text:SetString(text or "")
     self.status_text:SetColour(r or 0.92, g or 0.92, b or 0.92, a or 1)

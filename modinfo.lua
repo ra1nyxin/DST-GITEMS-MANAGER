@@ -7,13 +7,14 @@ Current features:
 - GIM scans dropped ground items only when the panel is opened.
 - The scan is limited to the player's current shard or world instance.
 - The list is sorted by total item count from highest to lowest.
+- Mouse wheel scrolls through result pages, same as the Prev / Next buttons.
 - Each row can pick up that prefab directly into inventory and backpack space.
 - Partial pickup is supported, so oversized stacks stop cleanly at real capacity.
 - Stack-size compatibility follows the live server inventory rules, including common larger-stack mods.
 - Pressing the configured hotkey again while scanning closes the panel and cancels the active scan immediately.
 ]]
 author = "ra1nyxin"
-version = "0.1.13"
+version = "0.1.14"
 
 forumthread = ""
 api_version = 10
