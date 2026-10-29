@@ -32,6 +32,7 @@
 - 已记录：不要用 `TheInput:AddKeyDownHandler(KEY_N, ...)` 去挂这种热键；那是全局 key handler，不看当前 screen，聊天框和控制台里打字也会触发。包 `PlayerHUD:OnRawKey` 才是只在游戏内 HUD 生效的层。
 - 已记录：`Esc` 在键盘上对应 `CONTROL_PAUSE`，部分界面还会走 `CONTROL_CANCEL`；只在 `OnRawKey` 里处理 `KEY_ESCAPE` 拦不住暂停菜单，必须拦 `PlayerHUD:OnControl`。
 - 已记录：`inventory:GiveItem(...)` 放不下时会自己 `DropItem` 到地上，任何“凭空造物品”的路径都要先 `CanAcceptCount` 再给，并且失败时 `Remove()` 掉刚造出来的实体，否则会漏一地复制品。
+- 已记录：`Text:SetPosition(x, y)` 的 `x` 是**区域中心**，不是区域左边缘；`SetRegionSize(w, h)` 之后这一列的实际边界是 `x - w/2` 到 `x + w/2`。按左边缘算列位置会整列左移，右边再被按钮压住，`Count` 数字会直接看不见。
 
 实现记录：
 - `modmain.lua` 通过 `AddClassPostConstruct("screens/playerhud", ...)` 把 `GIM` 挂到本地 HUD 上，并用 `OnRawKey` 接配置快捷键切换，默认 `V+N`。
@@ -63,6 +64,7 @@
 - `CTake` 复制链路是先用 `SpawnPrefab(prefab)` 造一份，再按 `stackable.maxsize` 分段、`inventory:CanAcceptCount(...)` 算容量、`inventory:GiveItem(...)` 入库；数量取点击时地上现存总数，不信任客户端传来的数字。
 - 复制品入库失败时 `GiveItem` 会自己把物品丢到地上，所以失败分支必须把刚 `SpawnPrefab` 出来、`owner == nil` 的实体 `Remove()` 掉，避免复制品漏在地上。
 - `stackable:SetStackSize(sz)` 只夹 `MAXUINT`，不会按 `maxsize` 夹紧；构造复制堆时要自己 `math.min(数量, stackable.maxsize)`。
+- 列宽按 804 的行宽做几何分配：`Item 260 / Prefab 190 / Count 84 / Take 88 / CTake 88`，间隔 `10 / 10 / 14 / 10`，左右各 25 内边距；列头、行文本、按钮共用同一套中心点，避免再出现“表头和数值各算各的”。
 - 玩家扫描状态缓存挂在 `player._gim_scan_open / _gim_scan_serial / _gim_scan_state / _gim_scan_task`，下次回看扫描取消或重扫逻辑先找这几个字段。
 
 Current features:
@@ -96,6 +98,7 @@ Notes:
 - Recorded pitfall: do not register this kind of hotkey through `TheInput:AddKeyDownHandler(KEY_N, ...)`. That is a global key handler that ignores the active screen, so it also fires while typing in chat or the console. Wrapping `PlayerHUD:OnRawKey` is the layer that only exists in the in-game HUD.
 - Recorded pitfall: on keyboard, `Esc` arrives as `CONTROL_PAUSE` and some screens also see `CONTROL_CANCEL`. Handling `KEY_ESCAPE` in `OnRawKey` cannot stop the pause menu; `PlayerHUD:OnControl` has to be wrapped.
 - Recorded pitfall: `inventory:GiveItem(...)` drops the item on the ground when it cannot fit. Any path that creates items must check `CanAcceptCount` first and `Remove()` the freshly spawned entity on failure, otherwise copies leak onto the ground.
+- Recorded pitfall: `Text:SetPosition(x, y)` centers the region on `x`; after `SetRegionSize(w, h)` the column spans `x - w/2` to `x + w/2`. Treating `x` as the left edge shifts the whole column left and lets the buttons cover the `Count` values.
 - `modmain.lua` is the bootstrap. It `modimport`s `scripts/gim.lua`, injects the HUD widget through `AddClassPostConstruct("screens/playerhud", ...)`, and wraps `PlayerHUD:OnRawKey` to toggle the panel with the configured hotkey, defaulting to `V+N`.
 - Combo detection uses `TheInput:IsKeyDown(modifier)` instead of tracking modifier key events, so focus loss, alt-tab, and chat overlays cannot leave the modifier stuck down.
 - The toggle key press only arms the toggle; the actual open/close happens on key release, so key repeat cannot flicker the panel and releasing the modifier first still works.
@@ -108,4 +111,5 @@ Notes:
 - Ground-item filtering currently checks `components.inventoryitem.owner == nil` and excludes `INLIMBO`, `NOCLICK`, `FX`, and `DECOR`.
 - Pickup capacity follows the real inventory API chain: `inventory:CanAcceptCount(inst, stack_size)`, optional `stackable:Get(accept_count)`, then `inventory:GiveItem(...)`.
 - `CTake` runs `SpawnPrefab(prefab)`, clamps each chunk to `stackable.maxsize`, checks `CanAcceptCount`, then `GiveItem`. The copy amount comes from the server recounting ground items, not from the client payload.
+- Row columns are laid out inside the 804-wide row background as `Item 260 / Prefab 190 / Count 84 / Take 88 / CTake 88` with `10 / 10 / 14 / 10` gaps and 25 padding on each side; headers, row text, and buttons share the same region centers.
 - Per-player scan state lives on `player._gim_scan_open`, `_gim_scan_serial`, `_gim_scan_state`, and `_gim_scan_task`, which is the first place to inspect when scan cancel or rescan behavior looks wrong.

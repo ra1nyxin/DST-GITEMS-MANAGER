@@ -28,6 +28,7 @@ Server-side dropped item manager focused on practical shard cleanup and retrieva
 - 已记录：原版滚动条和默认按钮在这种实时更新列表里交互边界不太稳；当前版本已经换成自绘长方形按钮和固定行翻页，尽量减少 hover/拖动时的崩溃面。
 - 已记录：HUD 布局里不要把翻页按钮、页码、关闭提示和列表内容混在同一块自由摆放；拆成 header/list/footer 三段再做固定列对齐会稳很多。
 - 已记录：DST 这类 HUD widget 不是天然裁剪容器，列表行如果总高度超出真正的 viewport，就会直接视觉上盖到状态文字、列头和 footer；所以行数、行高、间距要先把几何算对，再谈细节排版。
+- 已记录：`Text:SetPosition(x, y)` 的 `x` 是区域中心，`SetRegionSize(w, h)` 之后这一列的实际边界是 `x ± w/2`；按左边缘算会整列左移，右边的 `Count` 数字会被按钮压住看不见。
 - 入口在 `modmain.lua`，先 `modimport("scripts/gim.lua")`，再用 `AddClassPostConstruct("screens/playerhud", ...)` 把客户端 HUD 面板挂进去。
 - 按键切换是包 `PlayerHUD:OnRawKey`，按下主键时用 `TheInput:IsKeyDown(修饰键)` 判定组合，抬起主键才真正开关，默认 `V+N`。
 - `Esc` 关闭是包 `PlayerHUD:OnControl` 并吃掉 `CONTROL_PAUSE` / `CONTROL_CANCEL`，不走 `OnRawKey`，否则会顺带弹出暂停菜单。
@@ -35,6 +36,7 @@ Server-side dropped item manager focused on practical shard cleanup and retrieva
 - 服务端回包走 `scan_begin`、`scan_chunk`、`scan_complete`、`pickup_result`、`copy_result` 五个 `ClientModRPC`。
 - 分帧扫描靠 `player:DoTaskInTime(0, ...)` 跑 `Ents`，拾取容量判断靠 `inventory:CanAcceptCount` + `inventory:GiveItem`，兼容大堆叠也是跟着这套真实库存接口走。
 - `CTake` 用 `SpawnPrefab` 造复制品，按 `stackable.maxsize` 分段、`CanAcceptCount` 算容量、`GiveItem` 入库，数量由服务端重新数地上原件得出，不信任客户端数字。
+- 行宽 804 的列分配固定为 `Item 260 / Prefab 190 / Count 84 / Take 88 / CTake 88`，间隔 `10 / 10 / 14 / 10`，左右各 25 内边距，列头、行文本和按钮共用同一套中心点。
 - 玩家扫描态挂在 `player._gim_scan_open / _gim_scan_serial / _gim_scan_state / _gim_scan_task`，回看取消和重扫问题先查这里。
 
 English
@@ -64,6 +66,7 @@ Notes:
 - Recorded pitfall: stock scrollbars and default button skins can be brittle inside live-updating custom lists, so this version switches to drawn rectangular buttons and fixed-row paging for a safer interaction path.
 - Recorded pitfall: do not let paging controls, page text, close hints, and row content share one loose layout block; a dedicated header/list/footer split with fixed columns is much more stable.
 - Recorded pitfall: DST HUD widgets are not automatic clipping containers. If the total row stack exceeds the actual viewport, rows will visibly cover the status line, column labels, and footer, so row count, row height, and spacing have to fit the geometry first.
+- Recorded pitfall: `Text:SetPosition(x, y)` centers the region on `x`; after `SetRegionSize(w, h)` the column spans `x - w/2` to `x + w/2`. Treating `x` as the left edge shifts the column left and lets buttons cover the `Count` values.
 - Recorded pitfall: do not hook this hotkey via `TheInput:AddKeyDownHandler`; that handler ignores the active screen and also fires while chat or the console is open. `PlayerHUD:OnRawKey` is the in-game HUD layer.
 - Recorded pitfall: `Esc` arrives as `CONTROL_PAUSE` (and sometimes `CONTROL_CANCEL`), so `PlayerHUD:OnControl` has to be wrapped; `OnRawKey` alone cannot prevent the pause menu.
 - Recorded pitfall: `inventory:GiveItem` drops items on the ground when it cannot fit, so copy paths must `CanAcceptCount` first and `Remove()` the freshly spawned entity on failure.
@@ -75,4 +78,5 @@ Notes:
 - Scan slicing: `player:DoTaskInTime(0, ...)` over `Ents` in batches.
 - Capacity check path: `inventory:CanAcceptCount(...)` -> optional `stackable:Get(...)` -> `inventory:GiveItem(...)`.
 - CTake path: `SpawnPrefab(...)` -> clamp to `stackable.maxsize` -> `CanAcceptCount` -> `GiveItem`; the count is recounted on the server from ground items.
+- Row geometry inside the 804-wide row background: `Item 260 / Prefab 190 / Count 84 / Take 88 / CTake 88` with `10 / 10 / 14 / 10` gaps and 25 padding per side; headers, row text, and buttons share the same region centers.
 - Player scan state fields: `_gim_scan_open`, `_gim_scan_serial`, `_gim_scan_state`, `_gim_scan_task`.

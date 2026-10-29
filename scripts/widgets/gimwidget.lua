@@ -108,34 +108,34 @@ local GIMRow = Class(Widget, function(self, owner, onclick, oncopyclick)
     self.name_text = self:AddChild(Text(_G.CHATFONT, 24, ""))
     self.name_text:SetColour(0.95, 0.95, 0.95, 1)
     self.name_text:SetHAlign(_G.ANCHOR_LEFT)
-    self.name_text:SetRegionSize(250, 34)
-    self.name_text:SetPosition(-375, 0, 0)
+    self.name_text:SetRegionSize(260, 34)
+    self.name_text:SetPosition(-247, 0, 0)
 
     self.prefab_text = self:AddChild(Text(_G.CHATFONT, 18, ""))
     self.prefab_text:SetColour(0.72, 0.72, 0.72, 1)
     self.prefab_text:SetHAlign(_G.ANCHOR_LEFT)
     self.prefab_text:SetRegionSize(190, 28)
-    self.prefab_text:SetPosition(-115, 0, 0)
+    self.prefab_text:SetPosition(-12, 0, 0)
 
     self.count_text = self:AddChild(Text(_G.CHATFONT, 22, ""))
     self.count_text:SetColour(0.92, 0.86, 0.58, 1)
     self.count_text:SetHAlign(_G.ANCHOR_RIGHT)
-    self.count_text:SetRegionSize(90, 30)
-    self.count_text:SetPosition(175, 0, 0)
+    self.count_text:SetRegionSize(84, 30)
+    self.count_text:SetPosition(135, 0, 0)
 
     self.button = self:AddChild(RectButton(88, 32, "Take", function()
         if self.data ~= nil and self.onclick ~= nil then
             self.onclick(self.data.prefab)
         end
     end))
-    self.button:SetPosition(233, 0, 0)
+    self.button:SetPosition(235, 0, 0)
 
     self.copy_button = self:AddChild(RectButton(88, 32, "CTake", function()
         if self.data ~= nil and self.oncopyclick ~= nil then
             self.oncopyclick(self.data.prefab)
         end
     end))
-    self.copy_button:SetPosition(331, 0, 0)
+    self.copy_button:SetPosition(333, 0, 0)
 end)
 
 function GIMRow:SetData(data, row_index)
@@ -256,20 +256,20 @@ local GIMWidget = Class(Widget, function(self, owner, hud, toggle_key_label, mod
 
     self.column_item = self.panel:AddChild(Text(_G.CHATFONT, 22, "Item"))
     self.column_item:SetColour(0.86, 0.86, 0.86, 1)
-    self.column_item:SetPosition(-375, 131, 0)
-    self.column_item:SetRegionSize(250, 28)
+    self.column_item:SetPosition(-247, 131, 0)
+    self.column_item:SetRegionSize(260, 28)
     self.column_item:SetHAlign(_G.ANCHOR_LEFT)
 
     self.column_prefab = self.panel:AddChild(Text(_G.CHATFONT, 22, "Prefab"))
     self.column_prefab:SetColour(0.86, 0.86, 0.86, 1)
-    self.column_prefab:SetPosition(-115, 131, 0)
+    self.column_prefab:SetPosition(-12, 131, 0)
     self.column_prefab:SetRegionSize(190, 28)
     self.column_prefab:SetHAlign(_G.ANCHOR_LEFT)
 
     self.column_count = self.panel:AddChild(Text(_G.CHATFONT, 22, "Count"))
     self.column_count:SetColour(0.86, 0.86, 0.86, 1)
-    self.column_count:SetPosition(175, 131, 0)
-    self.column_count:SetRegionSize(90, 28)
+    self.column_count:SetPosition(135, 131, 0)
+    self.column_count:SetRegionSize(84, 28)
     self.column_count:SetHAlign(_G.ANCHOR_RIGHT)
 
     self.page_text = self.panel:AddChild(Text(_G.CHATFONT, 20, "0 / 0"))
