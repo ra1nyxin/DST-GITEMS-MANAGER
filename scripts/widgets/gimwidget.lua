@@ -92,11 +92,12 @@ function RectButton:SetText(label)
     self.button:SetText(label or "")
 end
 
-local GIMRow = Class(Widget, function(self, owner, onclick)
+local GIMRow = Class(Widget, function(self, owner, onclick, oncopyclick)
     Widget._ctor(self, "gim_row")
 
     self.owner = owner
     self.onclick = onclick
+    self.oncopyclick = oncopyclick
     self.data = nil
 
     self.bg = self:AddChild(Image(PANEL_ATLAS, PANEL_TEX))
@@ -107,27 +108,34 @@ local GIMRow = Class(Widget, function(self, owner, onclick)
     self.name_text = self:AddChild(Text(_G.CHATFONT, 24, ""))
     self.name_text:SetColour(0.95, 0.95, 0.95, 1)
     self.name_text:SetHAlign(_G.ANCHOR_LEFT)
-    self.name_text:SetRegionSize(280, 34)
-    self.name_text:SetPosition(-282, 0, 0)
+    self.name_text:SetRegionSize(250, 34)
+    self.name_text:SetPosition(-375, 0, 0)
 
     self.prefab_text = self:AddChild(Text(_G.CHATFONT, 18, ""))
     self.prefab_text:SetColour(0.72, 0.72, 0.72, 1)
     self.prefab_text:SetHAlign(_G.ANCHOR_LEFT)
-    self.prefab_text:SetRegionSize(270, 28)
-    self.prefab_text:SetPosition(-42, 0, 0)
+    self.prefab_text:SetRegionSize(190, 28)
+    self.prefab_text:SetPosition(-115, 0, 0)
 
     self.count_text = self:AddChild(Text(_G.CHATFONT, 22, ""))
     self.count_text:SetColour(0.92, 0.86, 0.58, 1)
     self.count_text:SetHAlign(_G.ANCHOR_RIGHT)
     self.count_text:SetRegionSize(90, 30)
-    self.count_text:SetPosition(212, 0, 0)
+    self.count_text:SetPosition(175, 0, 0)
 
-    self.button = self:AddChild(RectButton(110, 32, "Take", function()
+    self.button = self:AddChild(RectButton(88, 32, "Take", function()
         if self.data ~= nil and self.onclick ~= nil then
             self.onclick(self.data.prefab)
         end
     end))
-    self.button:SetPosition(328, 0, 0)
+    self.button:SetPosition(233, 0, 0)
+
+    self.copy_button = self:AddChild(RectButton(88, 32, "CTake", function()
+        if self.data ~= nil and self.oncopyclick ~= nil then
+            self.oncopyclick(self.data.prefab)
+        end
+    end))
+    self.copy_button:SetPosition(331, 0, 0)
 end)
 
 function GIMRow:SetData(data, row_index)
@@ -148,15 +156,21 @@ function GIMRow:SetData(data, row_index)
     self.prefab_text:SetString(data.prefab)
     self.count_text:SetString(tostring(data.count))
     self.button:SetEnabled(true)
+    self.copy_button:SetEnabled(true)
     self:Show()
 end
 
-local GIMWidget = Class(Widget, function(self, owner, hud, toggle_key_label)
+local GIMWidget = Class(Widget, function(self, owner, hud, toggle_key_label, modifier_key_label, esc_close_enabled)
     Widget._ctor(self, "gim_widget")
 
     self.owner = owner
     self.hud = hud
     self.toggle_key_label = type(toggle_key_label) == "string" and toggle_key_label ~= "" and toggle_key_label or "N"
+    self.modifier_key_label = type(modifier_key_label) == "string" and modifier_key_label ~= "" and modifier_key_label or nil
+    self.combo_label = self.modifier_key_label ~= nil
+        and (self.modifier_key_label .. "+" .. self.toggle_key_label)
+        or self.toggle_key_label
+    self.esc_close_enabled = esc_close_enabled ~= false
     self.is_open = false
     self.is_scanning = false
     self.active_scan_id = 0
@@ -217,17 +231,24 @@ local GIMWidget = Class(Widget, function(self, owner, hud, toggle_key_label)
     self.header:SetHAlign(_G.ANCHOR_LEFT)
     self.header:SetRegionSize(300, 48)
 
+    local close_label = self.combo_label .. (self.esc_close_enabled and " / Esc" or "")
     self.subheader = self.panel:AddChild(Text(
         _G.CHATFONT,
         20,
-        string.format("Open: %s   Close: %s   Scope: current shard", self.toggle_key_label, self.toggle_key_label)
+        string.format("Open: %s   Close: %s   Scope: current shard", self.combo_label, close_label)
     ))
     self.subheader:SetColour(0.78, 0.78, 0.78, 1)
     self.subheader:SetPosition(-78, 218, 0)
     self.subheader:SetHAlign(_G.ANCHOR_LEFT)
     self.subheader:SetRegionSize(660, 28)
 
-    self.status_text = self.panel:AddChild(Text(_G.CHATFONT, 22, string.format("Press %s to scan.", self.toggle_key_label)))
+    self.status_text = self.panel:AddChild(Text(
+        _G.CHATFONT,
+        22,
+        self.modifier_key_label ~= nil
+            and string.format("Hold %s and press %s to open.", self.modifier_key_label, self.toggle_key_label)
+            or string.format("Press %s to open.", self.toggle_key_label)
+    ))
     self.status_text:SetColour(0.92, 0.92, 0.92, 1)
     self.status_text:SetPosition(0, 176, 0)
     self.status_text:SetRegionSize(790, 30)
@@ -235,19 +256,19 @@ local GIMWidget = Class(Widget, function(self, owner, hud, toggle_key_label)
 
     self.column_item = self.panel:AddChild(Text(_G.CHATFONT, 22, "Item"))
     self.column_item:SetColour(0.86, 0.86, 0.86, 1)
-    self.column_item:SetPosition(-314, 131, 0)
-    self.column_item:SetRegionSize(200, 28)
+    self.column_item:SetPosition(-375, 131, 0)
+    self.column_item:SetRegionSize(250, 28)
     self.column_item:SetHAlign(_G.ANCHOR_LEFT)
 
     self.column_prefab = self.panel:AddChild(Text(_G.CHATFONT, 22, "Prefab"))
     self.column_prefab:SetColour(0.86, 0.86, 0.86, 1)
-    self.column_prefab:SetPosition(-76, 131, 0)
-    self.column_prefab:SetRegionSize(230, 28)
+    self.column_prefab:SetPosition(-115, 131, 0)
+    self.column_prefab:SetRegionSize(190, 28)
     self.column_prefab:SetHAlign(_G.ANCHOR_LEFT)
 
     self.column_count = self.panel:AddChild(Text(_G.CHATFONT, 22, "Count"))
     self.column_count:SetColour(0.86, 0.86, 0.86, 1)
-    self.column_count:SetPosition(172, 131, 0)
+    self.column_count:SetPosition(175, 131, 0)
     self.column_count:SetRegionSize(90, 28)
     self.column_count:SetHAlign(_G.ANCHOR_RIGHT)
 
@@ -257,10 +278,10 @@ local GIMWidget = Class(Widget, function(self, owner, hud, toggle_key_label)
     self.page_text:SetRegionSize(180, 28)
     self.page_text:SetHAlign(_G.ANCHOR_MIDDLE)
 
-    self.footer = self.panel:AddChild(Text(_G.CHATFONT, 20, "Sorted by total count, highest first."))
+    self.footer = self.panel:AddChild(Text(_G.CHATFONT, 18, "Take moves items. CTake duplicates them."))
     self.footer:SetColour(0.72, 0.72, 0.72, 1)
-    self.footer:SetPosition(-246, -262, 0)
-    self.footer:SetRegionSize(360, 28)
+    self.footer:SetPosition(-230, -262, 0)
+    self.footer:SetRegionSize(380, 28)
     self.footer:SetHAlign(_G.ANCHOR_LEFT)
 
     self.list_root = self.panel:AddChild(Widget("gim_list_root"))
@@ -269,9 +290,15 @@ local GIMWidget = Class(Widget, function(self, owner, hud, toggle_key_label)
     self.rows = {}
     local top_y = LIST_CONTENT_HEIGHT * 0.5 - ROW_HEIGHT * 0.5
     for i = 1, ROW_VISIBLE_COUNT do
-        local row = self.list_root:AddChild(GIMRow(self.owner, function(prefab)
-            self:RequestPickup(prefab)
-        end))
+        local row = self.list_root:AddChild(GIMRow(
+            self.owner,
+            function(prefab)
+                self:RequestPickup(prefab)
+            end,
+            function(prefab)
+                self:RequestCopy(prefab)
+            end
+        ))
         row:SetPosition(0, top_y - (i - 1) * (ROW_HEIGHT + ROW_PADDING), 0)
         self.rows[i] = row
     end
@@ -378,6 +405,15 @@ function GIMWidget:RequestPickup(prefab)
     _G.SendModRPCToServer(_G.GetModRPC(MOD_RPC_NAMESPACE, "request_pickup"), prefab)
 end
 
+function GIMWidget:RequestCopy(prefab)
+    if prefab == nil or prefab == "" then
+        return
+    end
+
+    self:SetStatus(string.format("Copying %s...", GetItemName(prefab)), 0.88, 0.94, 1, 1)
+    _G.SendModRPCToServer(_G.GetModRPC(MOD_RPC_NAMESPACE, "request_copy"), prefab)
+end
+
 function GIMWidget:Open()
     if self.is_open then
         return
@@ -396,6 +432,7 @@ function GIMWidget:Close(send_cancel)
 
     self.is_open = false
     self.is_scanning = false
+    self:ClearFocus()
 
     if send_cancel then
         self:RequestCancel()
@@ -502,6 +539,30 @@ function GIMWidget:OnServerPickupResult(prefab, taken_count)
     else
         self:SetStatus(
             string.format("No free space for %s.", GetItemName(prefab)),
+            1,
+            0.72,
+            0.72,
+            1
+        )
+    end
+end
+
+function GIMWidget:OnServerCopyResult(prefab, copied_count)
+    if not self.is_open then
+        return
+    end
+
+    if copied_count > 0 then
+        self:SetStatus(
+            string.format("Copied %d x %s. Ground stacks kept.", copied_count, GetItemName(prefab)),
+            0.76,
+            0.92,
+            0.76,
+            1
+        )
+    else
+        self:SetStatus(
+            string.format("Could not copy %s: no space or no ground items.", GetItemName(prefab)),
             1,
             0.72,
             0.72,

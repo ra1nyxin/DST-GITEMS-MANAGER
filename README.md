@@ -3,12 +3,13 @@
 这是一个服务器内地面掉落物管理的小模组喵。
 
 当前功能：
-- 房间内所有安装了模组的玩家都可以按已配置快捷键打开 `GIM` 面板，默认是 `N`。
+- 房间内所有安装了模组的玩家都可以按住已配置修饰键、再按已配置快捷键打开 `GIM` 面板，默认是 `V+N`。
+- 面板打开时按 `Esc` 也可以关闭；这个行为可以在游戏内模组配置里关掉。
 - `GIM` 只会在面板打开时才开始扫描玩家当前所在 shard 里的地面掉落物。
 - 如果扫描过程中再次按已配置快捷键关闭面板，会立刻中断当前扫描，不会继续后台扫完。
 - 列表会把当前 shard 内所有地面掉落物按总数量从高到低排序。
 - 鼠标滚轮也可以直接翻页，和 `Prev` / `Next` 按钮等价。
-- 每一行都可以直接点 `Take` 把该 prefab 的地面物品往玩家物品栏和背包里塞。
+- 每一行有两个按钮：`Take` 把该 prefab 的地面物品正常拿进玩家物品栏和背包；`CTake` 按地上现存数量复制同样的物品塞进背包，地面上的原件不会消失。
 - 如果背包空间不够，就只拿得下当前实际还能装进去的那部分，不会溢出。
 - 兼容常见的大堆叠环境，像 `99 stack` 这类改堆叠上限的服里，会按服务器当前真实堆叠规则判断还能拿多少。
 
@@ -17,7 +18,9 @@
 - 统计单位按真实物品数量算，不是按地上实体个数算；所以一组 `wood x80` 会按 `80` 计入排序。
 - 拾取时不会走人物跑过去捡的动作，而是直接按服务端库存规则塞进玩家主背包和溢出容器。
 - 当前 UI 故意做得很朴素，没有额外贴图资源，重点是稳定和够用。
-- 当前版本已经支持在游戏内模组配置里修改 `GIM` 快捷键，默认是 `N`。
+- 当前版本支持在游戏内模组配置里修改 `GIM` 的修饰键（默认 `V`）、主键（默认 `N`）以及 `Esc` 关闭行为（默认开启）。
+- `CTake` 复制的数量按点击时地上现存数量结算，不用面板上次扫描的快照；每次点都会重新数一遍，所以别人先拿走一部分时复制数量也会跟着变。
+- `CTake` 不消耗地面原件，也不改变扫描结果；地面数量不变，列表数字就不会动。
 - 已记录：dedicated server 不该去 `require("widgets/...")` 这类本地 HUD 脚本；UI 注入逻辑必须先做 `not TheNet:IsDedicated()` 之类的隔离，否则 shard 启动时就可能直接炸在 mod 加载阶段。
 - 已记录：被 `require` 的子脚本在 DST strict 环境里不要顶层裸用 `GLOBAL`；像 widget/helper 这种文件更稳的写法是 `local _G = _G`，否则很容易报 `variable 'GLOBAL' is not declared` 并把开房流程打断。
 - 已记录：不要默认以为原生 Lua 全局在 mod 环境里都能直接用；这次 `rawget(_G, "TheNet")` 就在启动期报了 `attempt to call global 'rawget' (a nil value)`，所以这类读取优先直接写成 `_G.TheNet` 更稳。
@@ -26,9 +29,15 @@
 - 已记录：这类实时列表里，原版滚动条和默认按钮贴图有时候交互边界不稳，尤其是自定义行内按钮和滚动同时存在时；当前版本已经改成自绘长方形按钮 + 固定行渲染，尽量减少 hover/拖动类崩溃面。
 - 已记录：HUD 布局不要把翻页按钮、页码、关闭提示和列表内容混在同一块自由摆放；最好拆成独立 header/list/footer 分区，再做固定列对齐，不然后期很容易互相压住。
 - 已记录：DST 这类 HUD widget 不是天然裁剪容器，列表行如果总高度超出预留 viewport，就会直接视觉上盖到状态栏、列头和 footer；行数、行高、间距必须先把几何账算平再摆控件。
+- 已记录：不要用 `TheInput:AddKeyDownHandler(KEY_N, ...)` 去挂这种热键；那是全局 key handler，不看当前 screen，聊天框和控制台里打字也会触发。包 `PlayerHUD:OnRawKey` 才是只在游戏内 HUD 生效的层。
+- 已记录：`Esc` 在键盘上对应 `CONTROL_PAUSE`，部分界面还会走 `CONTROL_CANCEL`；只在 `OnRawKey` 里处理 `KEY_ESCAPE` 拦不住暂停菜单，必须拦 `PlayerHUD:OnControl`。
+- 已记录：`inventory:GiveItem(...)` 放不下时会自己 `DropItem` 到地上，任何“凭空造物品”的路径都要先 `CanAcceptCount` 再给，并且失败时 `Remove()` 掉刚造出来的实体，否则会漏一地复制品。
 
 实现记录：
-- `modmain.lua` 通过 `AddClassPostConstruct("screens/playerhud", ...)` 把 `GIM` 挂到本地 HUD 上，并用 `OnRawKey` 接配置快捷键切换，默认 `N`。
+- `modmain.lua` 通过 `AddClassPostConstruct("screens/playerhud", ...)` 把 `GIM` 挂到本地 HUD 上，并用 `OnRawKey` 接配置快捷键切换，默认 `V+N`。
+- 组合键判定走 `TheInput:IsKeyDown(修饰键)`，不是自己监听修饰键的 keydown/keyup；这样 alt-tab、焦点丢失、聊天框打断都不会把修饰键状态卡成常按。
+- 按下主键时记录“这次是否带着修饰键”，抬起主键时才真正切换；长按/按键重复不会连开连关，先松 V 再松 N 也能正常触发。
+- `Esc` 关闭走包一层 `PlayerHUD:OnControl`，同时吃掉 `CONTROL_PAUSE` 和 `CONTROL_CANCEL`；只挂 `OnRawKey` 是拦不住暂停菜单的。
 - 服务端扫描逻辑集中在 `scripts/gim.lua`，只在收到打开请求后才对当前 shard 的 `Ents` 做分帧扫描。
 - 扫描结果会先按 prefab 聚合数量，再按数量从高到低排序，然后通过 `ClientModRPC` 分块发回客户端。
 - 关闭面板时会给服务端发取消请求，已经排队的扫描任务会被直接丢掉，不继续结算。
@@ -44,24 +53,28 @@
 - 当前扫描完成后会在状态行直接显示本次扫描耗时秒数。
 - 当前 HUD 布局已经固定成 `header / status / column / list / footer` 五段，行数和间距按真实 viewport 几何对齐，不再靠碰运气摆坐标。
 - `modmain.lua` 入口先 `modimport("scripts/gim.lua")`，服务端扫描和 RPC 都从这里挂起。
-- HUD 注入走 `AddClassPostConstruct("screens/playerhud", ...)`，快捷键切换则是包一层 `PlayerHUD:OnRawKey`，默认 `N`。
-- 客户端发请求用 `SendModRPCToServer(GetModRPC(...))`，当前有 `request_scan`、`cancel_scan`、`request_pickup` 三个入口。
+- HUD 注入走 `AddClassPostConstruct("screens/playerhud", ...)`，快捷键切换则是包一层 `PlayerHUD:OnRawKey`，默认 `V+N`。
+- 客户端发请求用 `SendModRPCToServer(GetModRPC(...))`，当前有 `request_scan`、`cancel_scan`、`request_pickup`、`request_copy` 四个入口。
 - 服务端注册入口用 `AddModRPCHandler(...)`，结果回客户端则走 `SendModRPCToClient(GetClientModRPC(...), userid, ...)`。
-- 客户端接回包用 `AddClientModRPCHandler(...)`，然后把 `scan_begin / scan_chunk / scan_complete / pickup_result` 转给 `widgets/gimwidget.lua`。
+- 客户端接回包用 `AddClientModRPCHandler(...)`，然后把 `scan_begin / scan_chunk / scan_complete / pickup_result / copy_result` 转给 `widgets/gimwidget.lua`。
 - 分帧扫描依赖 `player:DoTaskInTime(0, ...)`，每次只处理 `SCAN_BATCH_SIZE` 个 `Ents`，避免开面板瞬间卡死。
 - 掉落物判定目前看 `inventoryitem.owner == nil`，并排除 `INLIMBO`、`NOCLICK`、`FX`、`DECOR` 这些不该进列表的实体。
 - 拾取链路核心接口是 `inventory:CanAcceptCount(inst, stack_size)`、`stackable:Get(accept_count)`、`inventory:GiveItem(...)`，兼容大堆叠也主要靠这套真实库存规则。
+- `CTake` 复制链路是先用 `SpawnPrefab(prefab)` 造一份，再按 `stackable.maxsize` 分段、`inventory:CanAcceptCount(...)` 算容量、`inventory:GiveItem(...)` 入库；数量取点击时地上现存总数，不信任客户端传来的数字。
+- 复制品入库失败时 `GiveItem` 会自己把物品丢到地上，所以失败分支必须把刚 `SpawnPrefab` 出来、`owner == nil` 的实体 `Remove()` 掉，避免复制品漏在地上。
+- `stackable:SetStackSize(sz)` 只夹 `MAXUINT`，不会按 `maxsize` 夹紧；构造复制堆时要自己 `math.min(数量, stackable.maxsize)`。
 - 玩家扫描状态缓存挂在 `player._gim_scan_open / _gim_scan_serial / _gim_scan_state / _gim_scan_task`，下次回看扫描取消或重扫逻辑先找这几个字段。
 
 Current features:
-- Every player with the mod installed can press the configured hotkey to open the `GIM` panel. The default is `N`.
+- Every player with the mod installed holds the configured modifier key and presses the toggle key to open the `GIM` panel. The default is `V+N`.
+- `Esc` also closes the panel while it is open; this can be turned off in the in-game mod config.
 - `GIM` only starts scanning when the panel is opened.
 - The scan is limited to the current shard the player is standing in.
 - Pressing the configured hotkey again while scanning closes the panel and cancels the active scan immediately.
 - The list is sorted by total dropped item count from highest to lowest.
 - The mouse wheel pages the result list the same way as the `Prev` / `Next` buttons.
-- Each row can directly `Take` that prefab into the player's inventory and overflow container space.
-- If the inventory is nearly full, pickup only takes the amount that still fits.
+- Each row has `Take` (moves that prefab into the player's inventory and overflow space) and `CTake` (duplicates the same amount into the inventory while the ground stacks stay).
+- If the inventory is nearly full, pickup and copy only take the amount that still fits.
 - Common larger-stack environments such as `99 stack` style servers are handled by following the live server inventory and stack rules.
 
 Notes:
@@ -69,7 +82,9 @@ Notes:
 - Counts are based on real stack size, not just entity count on the ground.
 - Pickup does not make the character path over and loot manually; it inserts items directly through normal server inventory rules.
 - The UI is intentionally plain and asset-free in this version.
-- This build now exposes an in-game mod configuration entry for the `GIM` toggle hotkey. The default is `N`.
+- This build exposes in-game mod configuration entries for the `GIM` modifier key (default `V`), the toggle key (default `N`), and whether `Esc` closes the panel (default on).
+- `CTake` copies the ground count at click time rather than the last scan snapshot, so the copied amount follows whatever is actually on the ground when you press it.
+- `CTake` leaves the ground stacks untouched, so the scan result and row counts do not change.
 - Recorded pitfall: dedicated server shards should not `require` local HUD widget modules. Client UI hooks need an explicit `not TheNet:IsDedicated()` style guard.
 - Recorded pitfall: under DST strict mode, required helper/widget files should avoid top-level `GLOBAL` reads; `local _G = _G` is the safer pattern there.
 - Recorded pitfall: do not assume every vanilla Lua global is exposed in the mod environment. This build hit `attempt to call global 'rawget' (a nil value)`, so `_G.TheNet` is the safer read pattern here.
@@ -78,12 +93,19 @@ Notes:
 - Recorded pitfall: stock scrollbars and default button skins can become brittle in custom live-updating row lists. This build now uses drawn rectangular buttons plus fixed-row paging to reduce hover and drag failure cases.
 - Recorded pitfall: do not let paging buttons, page text, close hints, and row content float in the same loose layout block. A separate header/list/footer split with fixed columns stays far more stable.
 - Recorded pitfall: DST HUD widgets are not automatic clipping containers. If the total row stack exceeds the real viewport, rows will visually cover the status line, column labels, and footer, so row count, row height, and spacing need to fit the geometry before any fine-tuning.
-- `modmain.lua` is the bootstrap. It `modimport`s `scripts/gim.lua`, injects the HUD widget through `AddClassPostConstruct("screens/playerhud", ...)`, and wraps `PlayerHUD:OnRawKey` to toggle the panel with the configured hotkey, defaulting to `N`.
-- Client requests go up through `SendModRPCToServer(GetModRPC(...))` with `request_scan`, `cancel_scan`, and `request_pickup`.
+- Recorded pitfall: do not register this kind of hotkey through `TheInput:AddKeyDownHandler(KEY_N, ...)`. That is a global key handler that ignores the active screen, so it also fires while typing in chat or the console. Wrapping `PlayerHUD:OnRawKey` is the layer that only exists in the in-game HUD.
+- Recorded pitfall: on keyboard, `Esc` arrives as `CONTROL_PAUSE` and some screens also see `CONTROL_CANCEL`. Handling `KEY_ESCAPE` in `OnRawKey` cannot stop the pause menu; `PlayerHUD:OnControl` has to be wrapped.
+- Recorded pitfall: `inventory:GiveItem(...)` drops the item on the ground when it cannot fit. Any path that creates items must check `CanAcceptCount` first and `Remove()` the freshly spawned entity on failure, otherwise copies leak onto the ground.
+- `modmain.lua` is the bootstrap. It `modimport`s `scripts/gim.lua`, injects the HUD widget through `AddClassPostConstruct("screens/playerhud", ...)`, and wraps `PlayerHUD:OnRawKey` to toggle the panel with the configured hotkey, defaulting to `V+N`.
+- Combo detection uses `TheInput:IsKeyDown(modifier)` instead of tracking modifier key events, so focus loss, alt-tab, and chat overlays cannot leave the modifier stuck down.
+- The toggle key press only arms the toggle; the actual open/close happens on key release, so key repeat cannot flicker the panel and releasing the modifier first still works.
+- `Esc` is handled by wrapping `PlayerHUD:OnControl` and swallowing `CONTROL_PAUSE` / `CONTROL_CANCEL` while the panel is open.
+- Client requests go up through `SendModRPCToServer(GetModRPC(...))` with `request_scan`, `cancel_scan`, `request_pickup`, and `request_copy`.
 - Server request handlers are registered through `AddModRPCHandler(...)` in `scripts/gim.lua`.
 - Server responses go back through `SendModRPCToClient(GetClientModRPC(...), userid, ...)`, and the client receives them through `AddClientModRPCHandler(...)`.
-- The live result flow is `scan_begin -> scan_chunk -> scan_complete`, with `pickup_result` sent after a take action.
+- The live result flow is `scan_begin -> scan_chunk -> scan_complete`, with `pickup_result` after a take action and `copy_result` after a copy action.
 - Shard scanning is sliced with `player:DoTaskInTime(0, ...)` and `SCAN_BATCH_SIZE` so opening the panel does not try to process all `Ents` in one frame.
 - Ground-item filtering currently checks `components.inventoryitem.owner == nil` and excludes `INLIMBO`, `NOCLICK`, `FX`, and `DECOR`.
 - Pickup capacity follows the real inventory API chain: `inventory:CanAcceptCount(inst, stack_size)`, optional `stackable:Get(accept_count)`, then `inventory:GiveItem(...)`.
+- `CTake` runs `SpawnPrefab(prefab)`, clamps each chunk to `stackable.maxsize`, checks `CanAcceptCount`, then `GiveItem`. The copy amount comes from the server recounting ground items, not from the client payload.
 - Per-player scan state lives on `player._gim_scan_open`, `_gim_scan_serial`, `_gim_scan_state`, and `_gim_scan_task`, which is the first place to inspect when scan cancel or rescan behavior looks wrong.

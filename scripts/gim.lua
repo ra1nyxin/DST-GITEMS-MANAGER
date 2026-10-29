@@ -75,6 +75,10 @@ local function SendPickupResult(player, prefab, taken_count)
     _G.SendModRPCToClient(GetClientRpc("pickup_result"), player.userid, prefab, taken_count)
 end
 
+local function SendCopyResult(player, prefab, copied_count)
+    _G.SendModRPCToClient(GetClientRpc("copy_result"), player.userid, prefab, copied_count)
+end
+
 local function CancelPlayerScan(player, close_panel)
     if player == nil then
         return
@@ -261,6 +265,85 @@ local function PickupPrefabForPlayer(player, prefab)
     return taken_count
 end
 
+local function CountGroundItemsByPrefab(prefab)
+    local total = 0
+    for _, inst in pairs(_G.Ents) do
+        if IsGroundItem(inst) and inst.prefab == prefab then
+            total = total + GetItemCount(inst)
+        end
+    end
+    return total
+end
+
+-- CTake: 按地上现存数量复制同样的物品塞进玩家库存，地上那堆不动。
+local function CopyPrefabForPlayer(player, prefab)
+    if player == nil
+        or not player:IsValid()
+        or prefab == nil
+        or player.components == nil
+        or player.components.inventory == nil
+    then
+        return 0
+    end
+
+    local remaining = CountGroundItemsByPrefab(prefab)
+    if remaining <= 0 then
+        return 0
+    end
+
+    local inventory = player.components.inventory
+    local src_pos = player:GetPosition()
+    local copied_count = 0
+
+    while remaining > 0 do
+        local inst = _G.SpawnPrefab(prefab)
+        if inst == nil then
+            break
+        end
+
+        if inst.components == nil or inst.components.inventoryitem == nil then
+            inst:Remove()
+            break
+        end
+
+        local stackable = inst.components.stackable
+        local chunk = 1
+        if stackable ~= nil then
+            chunk = math.min(remaining, stackable.maxsize)
+            if chunk < 1 then
+                chunk = 1
+            end
+            stackable:SetStackSize(chunk)
+        end
+
+        local accept_count = inventory:CanAcceptCount(inst, chunk)
+        if accept_count <= 0 then
+            inst:Remove()
+            break
+        end
+
+        if accept_count < chunk then
+            chunk = accept_count
+            if stackable ~= nil then
+                stackable:SetStackSize(chunk)
+            end
+        end
+
+        if inventory:GiveItem(inst, nil, src_pos) then
+            copied_count = copied_count + chunk
+            remaining = remaining - chunk
+        else
+            -- GiveItem 放不下时会自己把物品丢到地上，复制品不能留在地上，直接销毁
+            if inst:IsValid() and inst.components.inventoryitem.owner == nil then
+                inst:Remove()
+            end
+            break
+        end
+    end
+
+    return copied_count
+end
+
 local function OnRequestScan(player)
     if _G.TheWorld == nil or not _G.TheWorld.ismastersim then
         return
@@ -288,6 +371,19 @@ local function OnRequestPickup(player, prefab)
     if player ~= nil and player._gim_scan_open then
         StartPlayerScan(player)
     end
+end
+
+local function OnRequestCopy(player, prefab)
+    if _G.TheWorld == nil or not _G.TheWorld.ismastersim then
+        return
+    end
+
+    if type(prefab) ~= "string" or prefab == "" then
+        return
+    end
+
+    local copied_count = CopyPrefabForPlayer(player, prefab)
+    SendCopyResult(player, prefab, copied_count)
 end
 
 local function OnClientScanBegin(scan_id)
@@ -322,14 +418,23 @@ local function OnClientPickupResult(prefab, taken_count)
     end
 end
 
+local function OnClientCopyResult(prefab, copied_count)
+    local widget = GetPlayerWidget()
+    if widget ~= nil then
+        widget:OnServerCopyResult(prefab, tonumber(copied_count) or 0)
+    end
+end
+
 AddModRPCHandler(MOD_RPC_NAMESPACE, "request_scan", OnRequestScan)
 AddModRPCHandler(MOD_RPC_NAMESPACE, "cancel_scan", OnCancelScan)
 AddModRPCHandler(MOD_RPC_NAMESPACE, "request_pickup", OnRequestPickup)
+AddModRPCHandler(MOD_RPC_NAMESPACE, "request_copy", OnRequestCopy)
 
 AddClientModRPCHandler(CLIENT_RPC_NAMESPACE, "scan_begin", OnClientScanBegin)
 AddClientModRPCHandler(CLIENT_RPC_NAMESPACE, "scan_chunk", OnClientScanChunk)
 AddClientModRPCHandler(CLIENT_RPC_NAMESPACE, "scan_complete", OnClientScanComplete)
 AddClientModRPCHandler(CLIENT_RPC_NAMESPACE, "pickup_result", OnClientPickupResult)
+AddClientModRPCHandler(CLIENT_RPC_NAMESPACE, "copy_result", OnClientCopyResult)
 
 AddPlayerPostInit(function(inst)
     if _G.TheWorld == nil or not _G.TheWorld.ismastersim then
