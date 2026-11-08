@@ -317,7 +317,7 @@ local GIMWidget = Class(Widget, function(self, owner, hud, toggle_key_label, mod
 end)
 
 function GIMWidget:GetMaxOffset()
-    return math.max(0, #self.items - ROW_VISIBLE_COUNT)
+    return math.max(0, math.floor((#self.items - 1) / ROW_VISIBLE_COUNT) * ROW_VISIBLE_COUNT)
 end
 
 function GIMWidget:UpdateScrollButtons()
@@ -340,7 +340,7 @@ end
 
 function GIMWidget:ScrollBy(delta)
     local max_offset = self:GetMaxOffset()
-    local new_offset = math.max(0, math.min(max_offset, self.scroll_offset + delta))
+    local new_offset = math.max(0, math.min(max_offset, self.scroll_offset + delta * ROW_VISIBLE_COUNT))
     if new_offset == self.scroll_offset then
         return
     end
