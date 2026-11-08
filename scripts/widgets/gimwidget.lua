@@ -46,7 +46,7 @@ local function SortEntries(items)
     end)
 end
 
-local RectButton = Class(Widget, function(self, width, height, label, onclick)
+local RectButton = Class(Widget, function(self, width, height, label, onclick, onrightclick)
     Widget._ctor(self, "gim_rect_button")
 
     self.onclick = onclick
@@ -78,6 +78,18 @@ local RectButton = Class(Widget, function(self, width, height, label, onclick)
             self.onclick()
         end
     end)
+    if onrightclick ~= nil then
+        local old_onmousebutton = self.button.OnMouseButton
+        self.button.OnMouseButton = function(button, mouse_button, down, x, y)
+            if mouse_button == _G.MOUSEBUTTON_RIGHT and button.focus and button:IsEnabled() then
+                if down then
+                    onrightclick()
+                end
+                return true
+            end
+            return old_onmousebutton(button, mouse_button, down, x, y)
+        end
+    end
 end)
 
 function RectButton:SetEnabled(enabled)
@@ -127,15 +139,12 @@ local GIMRow = Class(Widget, function(self, owner, onclick, oncopyclick)
         if self.data ~= nil and self.onclick ~= nil then
             self.onclick(self.data.prefab)
         end
-    end))
-    self.button:SetPosition(235, 0, 0)
-
-    self.copy_button = self:AddChild(RectButton(88, 32, "CTake", function()
+    end, function()
         if self.data ~= nil and self.oncopyclick ~= nil then
             self.oncopyclick(self.data.prefab)
         end
     end))
-    self.copy_button:SetPosition(333, 0, 0)
+    self.button:SetPosition(284, 0, 0)
 end)
 
 function GIMRow:SetData(data, row_index)
@@ -156,7 +165,6 @@ function GIMRow:SetData(data, row_index)
     self.prefab_text:SetString(data.prefab)
     self.count_text:SetString(tostring(data.count))
     self.button:SetEnabled(true)
-    self.copy_button:SetEnabled(true)
     self:Show()
 end
 
@@ -231,6 +239,11 @@ local GIMWidget = Class(Widget, function(self, owner, hud, toggle_key_label, mod
     self.header:SetHAlign(_G.ANCHOR_LEFT)
     self.header:SetRegionSize(300, 48)
 
+    self.close_button = self.panel:AddChild(RectButton(36, 36, "X", function()
+        self:Close(true)
+    end))
+    self.close_button:SetPosition(406, 264, 0)
+
     local close_label = self.combo_label .. (self.esc_close_enabled and " / Esc" or "")
     self.subheader = self.panel:AddChild(Text(
         _G.CHATFONT,
@@ -278,7 +291,7 @@ local GIMWidget = Class(Widget, function(self, owner, hud, toggle_key_label, mod
     self.page_text:SetRegionSize(180, 28)
     self.page_text:SetHAlign(_G.ANCHOR_MIDDLE)
 
-    self.footer = self.panel:AddChild(Text(_G.CHATFONT, 18, "Take moves items. CTake duplicates them."))
+    self.footer = self.panel:AddChild(Text(_G.CHATFONT, 18, "Take: left click moves, right click copies."))
     self.footer:SetColour(0.72, 0.72, 0.72, 1)
     self.footer:SetPosition(-230, -262, 0)
     self.footer:SetRegionSize(380, 28)

@@ -275,7 +275,7 @@ local function CountGroundItemsByPrefab(prefab)
     return total
 end
 
--- CTake: 按地上现存数量复制同样的物品塞进玩家库存，地上那堆不动。
+-- 按地上现存数量复制物品到玩家库存，不改变地面原件。
 local function CopyPrefabForPlayer(player, prefab)
     if player == nil
         or not player:IsValid()

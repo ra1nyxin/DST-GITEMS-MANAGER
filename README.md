@@ -9,7 +9,8 @@
 - 如果扫描过程中再次按已配置快捷键关闭面板，会立刻中断当前扫描，不会继续后台扫完。
 - 列表会把当前 shard 内所有地面掉落物按总数量从高到低排序。
 - 鼠标滚轮和 `Prev` / `Next` 按钮每次切换一整页。
-- 每一行有两个按钮：`Take` 把该 prefab 的地面物品正常拿进玩家物品栏和背包；`CTake` 按地上现存数量复制同样的物品塞进背包，地面上的原件不会消失。
+- 点击面板右上角的 `X` 可以关闭界面。
+- 左键 `Take` 拾取地面物品；右键 `Take` 复制地上现存数量，地面原件不动。
 - 如果背包空间不够，就只拿得下当前实际还能装进去的那部分，不会溢出。
 - 兼容常见的大堆叠环境，像 `99 stack` 这类改堆叠上限的服里，会按服务器当前真实堆叠规则判断还能拿多少。
 
@@ -19,8 +20,8 @@
 - 拾取时不会走人物跑过去捡的动作，而是直接按服务端库存规则塞进玩家主背包和溢出容器。
 - 当前 UI 故意做得很朴素，没有额外贴图资源，重点是稳定和够用。
 - 当前版本支持在游戏内模组配置里修改 `GIM` 的修饰键（默认 `V`）、主键（默认 `N`）以及 `Esc` 关闭行为（默认开启）。
-- `CTake` 复制的数量按点击时地上现存数量结算，不用面板上次扫描的快照；每次点都会重新数一遍，所以别人先拿走一部分时复制数量也会跟着变。
-- `CTake` 不消耗地面原件，也不改变扫描结果；地面数量不变，列表数字就不会动。
+- 右键 `Take` 按点击时地上现存数量复制，不使用上次扫描的快照。
+- 右键 `Take` 不消耗地面原件，也不改变扫描结果。
 - 已记录：dedicated server 不该去 `require("widgets/...")` 这类本地 HUD 脚本；UI 注入逻辑必须先做 `not TheNet:IsDedicated()` 之类的隔离，否则 shard 启动时就可能直接炸在 mod 加载阶段。
 - 已记录：被 `require` 的子脚本在 DST strict 环境里不要顶层裸用 `GLOBAL`；像 widget/helper 这种文件更稳的写法是 `local _G = _G`，否则很容易报 `variable 'GLOBAL' is not declared` 并把开房流程打断。
 - 已记录：不要默认以为原生 Lua 全局在 mod 环境里都能直接用；这次 `rawget(_G, "TheNet")` 就在启动期报了 `attempt to call global 'rawget' (a nil value)`，所以这类读取优先直接写成 `_G.TheNet` 更稳。
@@ -61,10 +62,10 @@
 - 分帧扫描依赖 `player:DoTaskInTime(0, ...)`，每次只处理 `SCAN_BATCH_SIZE` 个 `Ents`，避免开面板瞬间卡死。
 - 掉落物判定目前看 `inventoryitem.owner == nil`，并排除 `INLIMBO`、`NOCLICK`、`FX`、`DECOR` 这些不该进列表的实体。
 - 拾取链路核心接口是 `inventory:CanAcceptCount(inst, stack_size)`、`stackable:Get(accept_count)`、`inventory:GiveItem(...)`，兼容大堆叠也主要靠这套真实库存规则。
-- `CTake` 复制链路是先用 `SpawnPrefab(prefab)` 造一份，再按 `stackable.maxsize` 分段、`inventory:CanAcceptCount(...)` 算容量、`inventory:GiveItem(...)` 入库；数量取点击时地上现存总数，不信任客户端传来的数字。
+- 右键复制链路是先用 `SpawnPrefab(prefab)` 造一份，再按 `stackable.maxsize` 分段、`inventory:CanAcceptCount(...)` 算容量、`inventory:GiveItem(...)` 入库；数量取点击时地上现存总数，不信任客户端传来的数字。
 - 复制品入库失败时 `GiveItem` 会自己把物品丢到地上，所以失败分支必须把刚 `SpawnPrefab` 出来、`owner == nil` 的实体 `Remove()` 掉，避免复制品漏在地上。
 - `stackable:SetStackSize(sz)` 只夹 `MAXUINT`，不会按 `maxsize` 夹紧；构造复制堆时要自己 `math.min(数量, stackable.maxsize)`。
-- 列宽按 804 的行宽做几何分配：`Item 260 / Prefab 190 / Count 84 / Take 88 / CTake 88`，间隔 `10 / 10 / 14 / 10`，左右各 25 内边距；列头、行文本、按钮共用同一套中心点，避免再出现“表头和数值各算各的”。
+- 行宽为 804，物品名、prefab 和数量分别占 260、190 和 84，Take 按钮宽 88；列头和行文本共用中心点。
 - 玩家扫描状态缓存挂在 `player._gim_scan_open / _gim_scan_serial / _gim_scan_state / _gim_scan_task`，下次回看扫描取消或重扫逻辑先找这几个字段。
 
 Current features:
@@ -75,7 +76,8 @@ Current features:
 - Pressing the configured hotkey again while scanning closes the panel and cancels the active scan immediately.
 - The list is sorted by total dropped item count from highest to lowest.
 - The mouse wheel and `Prev` / `Next` buttons move through one full page at a time.
-- Each row has `Take` (moves that prefab into the player's inventory and overflow space) and `CTake` (duplicates the same amount into the inventory while the ground stacks stay).
+- Click the `X` in the top-right corner to close the panel.
+- Left-click `Take` to move ground items into inventory; right-click it to copy them while leaving the originals in place.
 - If the inventory is nearly full, pickup and copy only take the amount that still fits.
 - Common larger-stack environments such as `99 stack` style servers are handled by following the live server inventory and stack rules.
 
@@ -85,8 +87,8 @@ Notes:
 - Pickup does not make the character path over and loot manually; it inserts items directly through normal server inventory rules.
 - The UI is intentionally plain and asset-free in this version.
 - This build exposes in-game mod configuration entries for the `GIM` modifier key (default `V`), the toggle key (default `N`), and whether `Esc` closes the panel (default on).
-- `CTake` copies the ground count at click time rather than the last scan snapshot, so the copied amount follows whatever is actually on the ground when you press it.
-- `CTake` leaves the ground stacks untouched, so the scan result and row counts do not change.
+- Right-clicking `Take` copies the ground count at click time rather than the last scan snapshot.
+- Right-clicking `Take` leaves the ground stacks and scan results untouched.
 - Recorded pitfall: dedicated server shards should not `require` local HUD widget modules. Client UI hooks need an explicit `not TheNet:IsDedicated()` style guard.
 - Recorded pitfall: under DST strict mode, required helper/widget files should avoid top-level `GLOBAL` reads; `local _G = _G` is the safer pattern there.
 - Recorded pitfall: do not assume every vanilla Lua global is exposed in the mod environment. This build hit `attempt to call global 'rawget' (a nil value)`, so `_G.TheNet` is the safer read pattern here.
@@ -110,6 +112,6 @@ Notes:
 - Shard scanning is sliced with `player:DoTaskInTime(0, ...)` and `SCAN_BATCH_SIZE` so opening the panel does not try to process all `Ents` in one frame.
 - Ground-item filtering currently checks `components.inventoryitem.owner == nil` and excludes `INLIMBO`, `NOCLICK`, `FX`, and `DECOR`.
 - Pickup capacity follows the real inventory API chain: `inventory:CanAcceptCount(inst, stack_size)`, optional `stackable:Get(accept_count)`, then `inventory:GiveItem(...)`.
-- `CTake` runs `SpawnPrefab(prefab)`, clamps each chunk to `stackable.maxsize`, checks `CanAcceptCount`, then `GiveItem`. The copy amount comes from the server recounting ground items, not from the client payload.
-- Row columns are laid out inside the 804-wide row background as `Item 260 / Prefab 190 / Count 84 / Take 88 / CTake 88` with `10 / 10 / 14 / 10` gaps and 25 padding on each side; headers, row text, and buttons share the same region centers.
+- Right-click copy runs `SpawnPrefab(prefab)`, clamps each chunk to `stackable.maxsize`, checks `CanAcceptCount`, then `GiveItem`. The server recounts ground items.
+- The 804-wide row uses widths of 260, 190 and 84 for item, prefab and count, and 88 for Take; headers and row text share the same centers.
 - Per-player scan state lives on `player._gim_scan_open`, `_gim_scan_serial`, `_gim_scan_state`, and `_gim_scan_task`, which is the first place to inspect when scan cancel or rescan behavior looks wrong.

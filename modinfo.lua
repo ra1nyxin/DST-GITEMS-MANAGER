@@ -4,19 +4,19 @@ Server-side dropped item manager focused on practical cleanup and retrieval.
 
 Current features:
 - Hold the configured modifier key and press the toggle key to open GIM (default: V+N).
-- Esc closes the panel while it is open (can be turned off in mod config).
+- Close the panel with the X button or Esc (Esc can be turned off in mod config).
 - Every player in the room can open GIM with the configured hotkey.
 - GIM scans dropped ground items only when the panel is opened.
 - The scan is limited to the player's current shard or world instance.
 - The list is sorted by total item count from highest to lowest.
 - Mouse wheel and Prev / Next buttons move through one full page at a time.
-- Each row has Take (moves that prefab from the ground into inventory and backpack space) and CTake (duplicates the same amount into inventory while the ground stacks stay).
+- Left-click Take to move ground items into inventory; right-click it to copy them while leaving the ground items in place.
 - Partial pickup is supported, so oversized stacks stop cleanly at real capacity.
 - Stack-size compatibility follows the live server inventory rules, including common larger-stack mods.
 - Pressing the hotkey again while scanning closes the panel and cancels the active scan immediately.
 ]]
 author = "ra1nyxin"
-version = "0.1.17"
+version = "0.1.19"
 
 forumthread = ""
 api_version = 10
